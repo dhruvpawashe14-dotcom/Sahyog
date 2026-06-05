@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyAdvisor CRM</title>
+<meta name="theme-color" content="#B8960C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MyAdvisor CRM">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ivory:#FFFFF0;--ivory2:#FAF8E8;--ivory3:#F5F2DC;--ivory4:#EDE9CC;--ivory5:#E8E4C0;
+  --gold:#B8960C;--gold2:#D4A017;--gold3:#F0C040;--gold4:#FAD860;--gold-light:#FFF8DC;--gold-border:#B8960C40;
+  --black:#0A0A0A;--black2:#1A1A1A;--black3:#2A2A2A;
+  --text:#0A0A0A;--text2:#3A3A3A;--text3:#6B6B6B;--text4:#9A9A9A;
+  --border:#B8960C20;--border2:#B8960C35;--border3:#B8960C55;
+  --sidebar-w:230px;
+  --red:#C0392B;--green:#1A7A4A;--amber:#B8730A;--blue:#1A4A8A;--purple:#5A2D82;
+}
+body{background:var(--ivory);color:var(--text);min-height:100vh;display:flex;font-family:'DM Sans',sans-serif;font-size:14px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--black2);border-right:1px solid #B8960C25;display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;overflow-y:auto}
+.logo{padding:20px 18px;border-bottom:1px solid #B8960C20;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--gold2),var(--gold3));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;color:var(--black2);flex-shrink:0}
+.logo-text{font-size:15px;font-weight:600;color:var(--ivory);letter-spacing:-0.2px}
+.logo-badge{font-size:9px;color:#B8960C70;font-family:'DM Mono',monospace;letter-spacing:0.1em}
+nav{flex:1;padding:12px 10px}
+.nav-section{font-size:9px;font-weight:600;letter-spacing:0.12em;color:#B8960C55;text-transform:uppercase;padding:14px 10px 6px}
+nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#9A9A8A;text-decoration:none;font-size:13px;font-weight:500;margin-bottom:2px;transition:all 0.15s;cursor:pointer;border:none;background:none;width:100%}
+nav a i{font-size:16px;flex-shrink:0}
+nav a:hover{background:#B8960C12;color:var(--gold3)}
+nav a.active{background:linear-gradient(90deg,#B8960C18,#B8960C08);color:var(--gold3);border-left:2px solid var(--gold2);padding-left:10px}
+.sidebar-footer{padding:14px 10px;border-top:1px solid #B8960C20;flex-shrink:0}
+.user-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#B8960C10;border:1px solid #B8960C20}
+.user-av{width:32px;height:32px;border-radius:7px;background:linear-gradient(135deg,var(--gold2),var(--gold3));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--black2);flex-shrink:0}
+.user-name{font-size:12px;font-weight:500;color:var(--ivory)}
+.user-role{font-size:10px;color:#B8960C70;margin-top:1px}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--ivory2);border-bottom:1px solid var(--border2);padding:0 26px;height:58px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50}
+.page-title{font-size:13px;font-weight:600;color:var(--text3);letter-spacing:0.02em;white-space:nowrap}
+.search-wrap{flex:1;max-width:420px;position:relative}
+.search-wrap input{width:100%;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px 8px 36px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border 0.15s}
+.search-wrap input:focus{border-color:var(--gold)}
+.search-wrap input::placeholder{color:var(--text4)}
+.search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text4);font-size:15px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.icon-btn{width:36px;height:36px;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:15px;transition:all 0.15s;position:relative}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold)}
+.notif-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--red);border:1.5px solid var(--ivory2)}
+.content{padding:26px;flex:1;background:var(--ivory)}
+.view{display:none}.view.active{display:block}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.page-hdr h1{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--black2);letter-spacing:-0.3px}
+.page-hdr p{font-size:12px;color:var(--text3);margin-top:3px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat-card{background:var(--ivory2);border:1px solid var(--border2);border-radius:12px;padding:20px;transition:all 0.2s;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold2),var(--gold4));opacity:0;transition:opacity 0.2s}
+.stat-card:hover{border-color:var(--border3)}.stat-card:hover::after{opacity:1}
+.stat-icon{width:36px;height:36px;border-radius:8px;background:var(--gold-light);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold);margin-bottom:14px}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:600;letter-spacing:-1px;color:var(--black2);font-family:'DM Mono',monospace;margin-bottom:4px}
+.stat-change{font-size:11px;display:flex;align-items:center;gap:4px}
+.up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--text4)}
+
+/* CARDS */
+.card{background:var(--ivory2);border:1px solid var(--border2);border-radius:12px;padding:20px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-title{font-size:13px;font-weight:600;color:var(--black2)}
+.card-action{font-size:11px;color:var(--gold);cursor:pointer;font-weight:500}
+.grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:10px 14px;color:var(--text3);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;border-bottom:1px solid var(--border2);background:var(--ivory3)}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer}
+tbody tr:hover{background:var(--gold-light)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:12px 14px;color:var(--text2);vertical-align:middle}
+tbody td:first-child{color:var(--black2);font-weight:500}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.b-green{background:#1A7A4A15;color:#1A7A4A;border:1px solid #1A7A4A25}
+.b-amber{background:#B8730A15;color:#B8730A;border:1px solid #B8730A25}
+.b-red{background:#C0392B15;color:#C0392B;border:1px solid #C0392B25}
+.b-blue{background:#1A4A8A15;color:#1A4A8A;border:1px solid #1A4A8A25}
+.b-purple{background:#5A2D8215;color:#5A2D82;border:1px solid #5A2D8225}
+.b-gray{background:#6B6B6B12;color:#6B6B6B;border:1px solid #6B6B6B20}
+.b-gold{background:var(--gold-light);color:var(--gold);border:1px solid var(--gold-border)}
+
+/* BUTTONS */
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px}
+.btn-gold{background:linear-gradient(135deg,var(--gold2),var(--gold3));color:var(--black2);font-weight:600}
+.btn-gold:hover{background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 2px 12px #B8960C30}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{background:var(--ivory3);border-color:var(--gold)}
+
+/* FORM */
+.form-section{margin-bottom:26px}
+.form-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--gold-border);display:flex;align-items:center;gap:8px}
+.form-section-title i{font-size:14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-full{grid-column:1/-1}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:11px;font-weight:500;color:var(--text3)}
+.fld input,.fld select,.fld textarea{background:var(--ivory2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border 0.15s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--gold);background:var(--ivory)}
+.fld input::placeholder,.fld textarea::placeholder{color:var(--text4)}
+.fld select option{background:var(--ivory2)}
+.fld textarea{resize:none;min-height:76px;line-height:1.5}
+
+/* PROGRESS */
+.prog{height:5px;background:var(--ivory4);border-radius:3px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold2),var(--gold3))}
+
+/* CHART */
+.chart-wrap{position:relative;height:190px}
+
+/* PIPELINE */
+.pipeline{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px}
+.pipeline::-webkit-scrollbar{height:4px}
+.pipeline::-webkit-scrollbar-thumb{background:var(--gold-border);border-radius:2px}
+.stage-col{min-width:168px;background:var(--ivory2);border-radius:12px;padding:14px;border:1px solid var(--border2);flex-shrink:0}
+.stage-name{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.stage-count{background:var(--ivory4);color:var(--text3);font-size:10px;padding:1px 7px;border-radius:10px}
+.stage-card{background:var(--ivory);border:1px solid var(--border2);border-radius:9px;padding:11px;margin-bottom:9px;cursor:pointer;transition:all 0.15s}
+.stage-card:hover{border-color:var(--gold);box-shadow:0 2px 8px #B8960C15}
+.stage-card p{font-size:12.5px;font-weight:500;color:var(--black2);margin-bottom:3px}
+.stage-card span{font-size:11px;color:var(--text4)}
+
+/* DRAWER */
+.overlay{position:fixed;inset:0;background:#0A0A0A60;z-index:200;display:none;align-items:flex-start;justify-content:flex-end}
+.overlay.open{display:flex}
+.drawer{width:540px;height:100vh;background:var(--ivory);border-left:1px solid var(--border3);display:flex;flex-direction:column;animation:slideIn 0.25s ease}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.drawer-hdr{padding:22px 26px;border-bottom:1px solid var(--border2);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;background:var(--ivory2)}
+.drawer-body{flex:1;overflow-y:auto;padding:26px}
+.drawer-body::-webkit-scrollbar{width:4px}
+.drawer-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.drawer-footer{padding:16px 26px;border-top:1px solid var(--border2);flex-shrink:0;display:flex;gap:10px;justify-content:flex-end;background:var(--ivory2)}
+
+/* KYC */
+.doc-btn{padding:10px 12px;background:var(--ivory);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.15s}
+.doc-btn:hover{border-color:var(--gold);background:var(--gold-light)}
+.doc-btn span{font-size:12px;font-weight:500;color:var(--text2)}
+.upload-zone{border:2px dashed var(--border3);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:14px}
+.upload-zone:hover{border-color:var(--gold);background:var(--gold-light)}
+
+/* TICKET CHAT */
+.chat-bubble-me{background:linear-gradient(135deg,var(--gold2),var(--gold3));color:var(--black2);padding:10px 14px;border-radius:12px 2px 12px 12px;font-size:13px;line-height:1.5;max-width:72%;word-break:break-word}
+.chat-bubble-other{background:var(--ivory3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:2px 12px 12px 12px;font-size:13px;line-height:1.5;max-width:72%;word-break:break-word}
+
+/* NOTIF PANEL */
+.notif-panel{position:absolute;top:46px;right:0;width:310px;background:var(--ivory2);border:1px solid var(--border3);border-radius:12px;padding:16px;z-index:300;display:none;box-shadow:0 8px 24px #0A0A0A15}
+.notif-panel.open{display:block}
+.notif-item{padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
+.notif-item:last-child{border-bottom:none}
+.notif-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.notif-icon.gold{background:var(--gold-light);color:var(--gold)}
+.notif-icon.red{background:#C0392B12;color:var(--red)}
+.notif-icon.green{background:#1A7A4A12;color:var(--green)}
+
+/* LEADER */
+.leader-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.leader-row:last-child{border-bottom:none}
+.leader-av{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ivory);flex-shrink:0}
+.leader-bar{width:72px;height:4px;background:var(--ivory4);border-radius:2px;overflow:hidden}
+.leader-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold2),var(--gold3))}
+
+/* AUTH */
+#auth-screen{position:fixed;inset:0;background:var(--black2);display:flex;align-items:center;justify-content:center;z-index:1000}
+.auth-card{width:400px;background:var(--ivory);border-radius:16px;padding:42px 40px;border:1px solid #B8960C30;box-shadow:0 20px 60px #00000060}
+.auth-logo{width:52px;height:52px;background:linear-gradient(135deg,var(--gold2),var(--gold3));border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:22px;color:var(--black2);margin:0 auto 20px}
+.auth-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;text-align:center;color:var(--black2);margin-bottom:6px;letter-spacing:-0.3px}
+.auth-sub{font-size:13px;color:var(--text3);text-align:center;margin-bottom:28px}
+.auth-fld{margin-bottom:14px}
+.auth-fld label{display:block;font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px}
+.auth-fld input{width:100%;background:var(--ivory2);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border 0.15s}
+.auth-fld input:focus{border-color:var(--gold)}
+.auth-fld input::placeholder{color:var(--text4)}
+.auth-err{font-size:12px;color:var(--red);margin-top:10px;text-align:center;min-height:18px}
+.auth-btn{width:100%;margin-top:16px;padding:12px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--gold2),var(--gold3));color:var(--black2);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s}
+.auth-btn:hover{box-shadow:0 4px 16px #B8960C40}
+.spin{animation:spin 0.8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tip-box{background:var(--gold-light);border:1px solid var(--gold-border);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--gold);margin:12px 0}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">MA</div>
+    <div class="auth-title">MyAdvisor CRM</div>
+    <div class="auth-sub">Enterprise Insurance Management Platform</div>
+    <div class="auth-fld"><label>Email Address</label><input type="email" id="auth-email" placeholder="your@email.com" autocomplete="email"></div>
+    <div class="auth-fld"><label>Password</label><input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="auth-err" id="auth-err"></div>
+    <button class="auth-btn" onclick="doLogin()" id="login-btn">Sign In</button>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text3)">Forgot password? Contact admin Dhruv Pawashe</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">MA</div>
+    <div><div class="logo-text">MyAdvisor</div><div class="logo-badge">ENTERPRISE CRM</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a onclick="showView('dashboard')" id="nav-dashboard" class="active"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+    <a onclick="showView('leads')" id="nav-leads"><i class="ti ti-users"></i><span>All Leads</span></a>
+    <a onclick="showView('pipeline')" id="nav-pipeline"><i class="ti ti-layout-kanban"></i><span>Pipeline</span></a>
+    <div class="nav-section">Work</div>
+    <a onclick="showView('tasks')" id="nav-tasks"><i class="ti ti-checklist"></i><span>Tasks</span></a>
+    <a onclick="showView('tickets')" id="nav-tickets"><i class="ti ti-ticket"></i><span>Tickets</span></a>
+    <a onclick="showView('kyc')" id="nav-kyc"><i class="ti ti-file-certificate"></i><span>KYC Vault</span></a>
+    <div class="nav-section">Tools</div>
+    <a onclick="showView('followups')" id="nav-followups"><i class="ti ti-bell-ringing"></i><span>Follow-ups Today</span></a>
+    <a onclick="showView('calendar')" id="nav-calendar"><i class="ti ti-calendar"></i><span>Calendar</span></a>
+    <a onclick="showView('import')" id="nav-import"><i class="ti ti-file-import"></i><span>Import Leads</span></a>
+    <div class="nav-section">Insights</div>
+    <a onclick="showView('analytics')" id="nav-analytics"><i class="ti ti-chart-bar"></i><span>Analytics</span></a>
+    <div class="nav-section admin-only">Admin</div>
+    <a onclick="showView('audit')" id="nav-audit" class="admin-only"><i class="ti ti-list-details"></i><span>Audit Log</span></a>
+    <a onclick="showView('employees')" id="nav-employees" class="admin-only"><i class="ti ti-building-community"></i><span>Employees</span></a>
+    <a onclick="showView('settings')" id="nav-settings" class="admin-only"><i class="ti ti-settings"></i><span>Settings</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-av" id="sidebar-av">MA</div>
+      <div><div class="user-name" id="sidebar-name">Loading...</div><div class="user-role" id="sidebar-role">—</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <span class="page-title" id="page-title">Dashboard</span>
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Search leads, clients, PAN, mobile..." id="global-search" oninput="globalSearch(this.value)">
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-gold" style="font-size:12px;padding:7px 14px" onclick="openDrawer('lead')"><i class="ti ti-plus"></i> New Lead</button>
+      <div class="icon-btn" style="position:relative" onclick="toggleNotif()">
+        <i class="ti ti-bell"></i>
+        <span class="notif-dot" id="notif-dot" style="display:none"></span>
+        <div class="notif-panel" id="notif-panel">
+          <div style="font-size:12px;font-weight:600;color:var(--black2);margin-bottom:12px">Notifications</div>
+          <div id="notif-list"><div style="font-size:12px;color:var(--text4);text-align:center;padding:16px">No new notifications</div></div>
+        </div>
+      </div>
+      <div class="icon-btn" onclick="doLogout()" title="Sign out"><i class="ti ti-logout"></i></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-hdr">
+        <div><h1>Good morning, <span id="dash-name" style="color:var(--gold)">—</span></h1><p id="dash-date"></p></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-users"></i></div><div class="stat-label">Total Leads</div><div class="stat-value" id="stat-leads">—</div><div class="stat-change neutral">All time</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-chart-line"></i></div><div class="stat-label">Active Pipeline</div><div class="stat-value" id="stat-active">—</div><div class="stat-change neutral">Excluding closed</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-certificate"></i></div><div class="stat-label">Policies Issued</div><div class="stat-value" id="stat-policies">—</div><div class="stat-change up"><i class="ti ti-trending-up"></i> Conversions</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-clock"></i></div><div class="stat-label">Follow-ups Today</div><div class="stat-value" id="stat-followups">—</div><div class="stat-change neutral">Due today</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-hdr"><span class="card-title">Lead Conversion Trend</span><span class="card-action" onclick="showView('analytics')">Full Report →</span></div><div class="chart-wrap"><canvas id="conv-chart"></canvas></div></div>
+        <div class="card"><div class="card-hdr"><span class="card-title">Team Leaderboard</span><span class="card-action" onclick="showView('employees')">All →</span></div><div id="leaderboard-list"></div></div>
+      </div>
+      <div class="grid-3">
+        <div class="card"><div class="card-hdr"><span class="card-title">Stage Distribution</span></div><div class="chart-wrap" style="height:150px"><canvas id="stage-chart"></canvas></div></div>
+        <div class="card"><div class="card-hdr"><span class="card-title">Open Tickets</span><span class="card-action" onclick="showView('tickets')">All →</span></div><div id="dash-tickets"><p style="font-size:12px;color:var(--text4);text-align:center;padding:20px">Loading...</p></div></div>
+        <div class="card"><div class="card-hdr"><span class="card-title">My Tasks Today</span><span class="card-action" onclick="showView('tasks')">All →</span></div><div id="dash-tasks"><p style="font-size:12px;color:var(--text4);text-align:center;padding:20px">Loading...</p></div></div>
+      </div>
+      <!-- Feature 4: Policy Renewal Tracker -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-hdr"><span class="card-title" style="display:flex;align-items:center;gap:8px"><i class="ti ti-calendar-due" style="color:var(--gold)"></i> Policy Renewals Due (Next 30 Days)</span><span class="card-action" onclick="showView('leads')">All Leads →</span></div>
+        <div id="renewal-list"><p style="font-size:12px;color:var(--text4);text-align:center;padding:20px">Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="view" id="view-leads">
+      <div class="page-hdr">
+        <div><h1>All Leads</h1><p id="leads-count">Loading...</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="filter-stage" onchange="filterLeads()" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:12.5px;color:var(--text2);font-family:'DM Sans',sans-serif;outline:none">
+            <option value="">All Stages</option>
+            <option>New Lead</option><option>Contacted</option><option>Interested</option><option>Meeting Scheduled</option><option>Follow-up Pending</option><option>Documentation Pending</option><option>Proposal Shared</option><option>Payment Pending</option><option>Policy Issued</option><option>Closed Won</option><option>Closed Lost</option>
+          </select>
+          <select id="filter-emp" onchange="filterLeads()" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:12.5px;color:var(--text2);font-family:'DM Sans',sans-serif;outline:none"><option value="">All Employees</option></select>
+          <button class="btn btn-outline" style="font-size:12px" onclick="exportCSV()"><i class="ti ti-download"></i> Export CSV</button>
+          <button class="btn btn-gold" style="font-size:12px" onclick="openDrawer('lead')"><i class="ti ti-plus"></i> Add Lead</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0"><div class="table-wrap"><table>
+        <thead><tr><th>Client Name</th><th>Mobile</th><th>Product</th><th>Stage</th><th>Assigned To</th><th>Follow-up</th><th>AI Score</th><th>Closed By</th><th></th></tr></thead>
+        <tbody id="leads-tbody"><tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text4)"><i class="spin ti ti-loader"></i> Loading...</td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="view" id="view-pipeline">
+      <div class="page-hdr"><div><h1>Pipeline</h1><p>Kanban view · Click a card to edit lead</p></div><button class="btn btn-gold" style="font-size:12px" onclick="openDrawer('lead')"><i class="ti ti-plus"></i> Add Lead</button></div>
+      <div class="pipeline" id="pipeline-board"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="view" id="view-tasks">
+      <div class="page-hdr"><div><h1>Task Manager</h1><p id="tasks-count">Loading...</p></div><button class="btn btn-gold" style="font-size:12px" onclick="openDrawer('task')"><i class="ti ti-plus"></i> Add Task</button></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-checklist"></i></div><div class="stat-label">Total</div><div class="stat-value" id="t-total">—</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-circle-check"></i></div><div class="stat-label">Completed</div><div class="stat-value" id="t-done" style="color:var(--green)">—</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-loader"></i></div><div class="stat-label">In Progress</div><div class="stat-value" id="t-prog" style="color:var(--gold)">—</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-alert-circle"></i></div><div class="stat-label">Delayed</div><div class="stat-value" id="t-delay" style="color:var(--red)">—</div></div>
+      </div>
+      <div class="card" style="padding:0"><div class="table-wrap"><table>
+        <thead><tr><th>Task</th><th>Assigned To</th><th>Priority</th><th>Due Date</th><th>Status</th><th>Update</th></tr></thead>
+        <tbody id="tasks-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text4)"><i class="spin ti ti-loader"></i> Loading...</td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- TICKETS -->
+    <div class="view" id="view-tickets">
+      <div id="ticket-list-panel">
+        <div class="page-hdr"><div><h1>Ticket System</h1><p>Click any ticket to open chat thread</p></div><button class="btn btn-gold" style="font-size:12px" onclick="openDrawer('ticket')"><i class="ti ti-plus"></i> New Ticket</button></div>
+        <div class="card" style="padding:0"><div class="table-wrap"><table>
+          <thead><tr><th>Ticket ID</th><th>Subject</th><th>Client · Product</th><th>Raised By</th><th>Assigned To</th><th>Priority</th><th>Due</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tickets-tbody"><tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text4)"><i class="spin ti ti-loader"></i> Loading...</td></tr></tbody>
+        </table></div></div>
+      </div>
+      <div id="ticket-chat-panel" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <button onclick="closeTicketChat()" class="btn btn-outline" style="padding:6px 12px;font-size:12px"><i class="ti ti-arrow-left"></i> All Tickets</button>
+          <div style="flex:1"><div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace" id="chat-ticket-id">#TK-0001</div><h2 style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif" id="chat-ticket-subject">—</h2></div>
+          <select id="chat-status-select" onchange="updateTicketStatusFromChat()" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--text2);outline:none;font-family:'DM Sans',sans-serif">
+            <option>Open</option><option>In Progress</option><option>Waiting</option><option>Resolved</option><option>Closed</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
+          <div class="card" style="padding:0;display:flex;flex-direction:column;height:calc(100vh - 220px)">
+            <div style="padding:12px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:600">Chat Thread</span><span style="font-size:11px;color:var(--text4)" id="chat-msg-count">0 messages</span></div>
+            <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px"><div style="text-align:center;color:var(--text4);font-size:12px;padding:40px">Loading...</div></div>
+            <div style="padding:12px 16px;border-top:1px solid var(--border2);background:var(--ivory2)">
+              <div style="display:flex;gap:8px;align-items:flex-end">
+                <textarea id="chat-input" placeholder="Type message... (Ctrl+Enter to send)" style="flex:1;background:var(--ivory);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;min-height:42px;max-height:100px" onkeydown="if(event.ctrlKey&&event.key==='Enter')sendChatMessage()"></textarea>
+                <label style="cursor:pointer;width:36px;height:36px;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text3)"><i class="ti ti-paperclip" style="font-size:15px"></i><input type="file" style="display:none" multiple onchange="sendChatFile(this.files)"></label>
+                <button onclick="sendChatMessage()" class="btn btn-gold" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:8px"><i class="ti ti-send" style="font-size:15px"></i></button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="card"><div class="card-hdr" style="margin-bottom:12px"><span class="card-title">Ticket Info</span></div><div id="chat-ticket-info" style="font-size:12.5px;display:flex;flex-direction:column;gap:8px"></div></div>
+            <div class="card"><div class="card-hdr" style="margin-bottom:10px"><span class="card-title">Attachments</span></div><div id="chat-attachments"><div style="font-size:11px;color:var(--text4);text-align:center;padding:12px">No attachments</div></div></div>
+            <div class="card"><div class="card-hdr" style="margin-bottom:10px"><span class="card-title">Bookmarks</span></div><div id="chat-bookmarks"><div style="font-size:11px;color:var(--text4);text-align:center;padding:12px">No bookmarks yet</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KYC VAULT -->
+    <div class="view" id="view-kyc">
+      <div id="kyc-list-panel">
+        <div class="page-hdr"><div><h1>KYC Vault</h1><p>Secure document storage · Search by name, PAN, Aadhaar, mobile</p></div><button class="btn btn-gold" style="font-size:12px" onclick="openKYCForm()"><i class="ti ti-user-plus"></i> Add Client KYC</button></div>
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <div style="flex:1;position:relative"><i class="ti ti-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text4);font-size:15px"></i><input type="text" id="kyc-search-input" placeholder="Search by name, PAN, Aadhaar, mobile, email..." oninput="searchKYC(this.value)" style="width:100%;background:var(--ivory2);border:1.5px solid var(--border2);border-radius:10px;padding:11px 14px 11px 40px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none"></div>
+          <select id="kyc-filter-doc" onchange="searchKYC(document.getElementById('kyc-search-input').value)" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text2);font-family:'DM Sans',sans-serif;outline:none"><option value="">All Doc Types</option><option>PAN Card</option><option>Aadhaar Card</option><option>Passport</option><option>Medical Report</option><option>Discharge Summary</option><option>Claim Details</option></select>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+          <div class="stat-card" style="padding:14px"><div class="stat-label">Total Clients</div><div class="stat-value" id="kyc-stat-clients">—</div></div>
+          <div class="stat-card" style="padding:14px"><div class="stat-label">Total Documents</div><div class="stat-value" id="kyc-stat-docs">—</div></div>
+          <div class="stat-card" style="padding:14px"><div class="stat-label">Verified</div><div class="stat-value" style="color:var(--green)" id="kyc-stat-verified">—</div></div>
+          <div class="stat-card" style="padding:14px"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--amber)" id="kyc-stat-pending">—</div></div>
+        </div>
+        <div id="kyc-clients-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"><div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text4)"><i class="spin ti ti-loader" style="font-size:24px;display:block;margin-bottom:8px"></i>Loading clients...</div></div>
+      </div>
+      <div id="kyc-form-panel" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <button onclick="closeKYCForm()" class="btn btn-outline" style="padding:6px 12px;font-size:12px"><i class="ti ti-arrow-left"></i> All Clients</button>
+          <h1 style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600" id="kyc-form-title">Add New Client KYC</h1>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card"><div class="card-hdr" style="margin-bottom:16px"><span class="card-title" style="display:flex;align-items:center;gap:8px"><i class="ti ti-user" style="color:var(--gold)"></i> Client Information</span></div>
+              <div class="form-grid">
+                <div class="fld form-full"><label>Full Name *</label><input type="text" id="kyc-name" placeholder="e.g. Rajesh Mehta"></div>
+                <div class="fld"><label>Mobile *</label><input type="tel" id="kyc-mobile" placeholder="+91 98765 43210"></div>
+                <div class="fld"><label>Email</label><input type="email" id="kyc-email" placeholder="client@email.com"></div>
+                <div class="fld"><label>Date of Birth</label><input type="date" id="kyc-dob"></div>
+                <div class="fld"><label>Occupation</label><input type="text" id="kyc-occupation" placeholder="Business Owner"></div>
+                <div class="fld form-full"><label>Address</label><input type="text" id="kyc-address" placeholder="Full address"></div>
+                <div class="fld"><label>City</label><input type="text" id="kyc-city" placeholder="Mumbai"></div>
+                <div class="fld"><label>State</label><input type="text" id="kyc-state" placeholder="Maharashtra"></div>
+                <div class="fld"><label>Uploaded By</label><select id="kyc-uploader" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none"></select></div>
+              </div>
+            </div>
+            <div class="card"><div class="card-hdr" style="margin-bottom:16px"><span class="card-title" style="display:flex;align-items:center;gap:8px"><i class="ti ti-id-badge" style="color:var(--gold)"></i> Document Numbers</span></div>
+              <div class="form-grid">
+                <div class="fld"><label>PAN Number</label><input type="text" id="kyc-pan" placeholder="ABCDE1234F" style="text-transform:uppercase"></div>
+                <div class="fld"><label>Aadhaar Number</label><input type="text" id="kyc-aadhaar" placeholder="XXXX XXXX XXXX"></div>
+                <div class="fld"><label>Passport Number</label><input type="text" id="kyc-passport" placeholder="A1234567"></div>
+                <div class="fld"><label>Driving License</label><input type="text" id="kyc-dl" placeholder="MH01 20240001234"></div>
+                <div class="fld"><label>Voter ID</label><input type="text" id="kyc-voter" placeholder="Voter ID"></div>
+                <div class="fld"><label>GSTIN</label><input type="text" id="kyc-gstin" placeholder="GST number"></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card"><div class="card-hdr" style="margin-bottom:14px"><span class="card-title" style="display:flex;align-items:center;gap:8px"><i class="ti ti-files" style="color:var(--gold)"></i> Upload Documents</span><span style="font-size:11px;color:var(--text4)">Multiple files allowed</span></div>
+              <div class="upload-zone" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor=''" ondrop="handleKYCDrop(event)" onclick="document.getElementById('kyc-bulk-input').click()">
+                <i class="ti ti-cloud-upload" style="font-size:28px;color:var(--text4);display:block;margin-bottom:8px"></i>
+                <p style="font-size:13px;font-weight:500;margin-bottom:3px">Drop all files here or click to browse</p>
+                <p style="font-size:11px;color:var(--text4)">Multiple files · PDF, JPG, PNG · 10MB each</p>
+              </div>
+              <input type="file" id="kyc-bulk-input" style="display:none" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCBulkFiles(this.files)">
+              <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">Or upload by type:</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+                <label class="doc-btn"><i class="ti ti-id-badge" style="color:var(--gold);font-size:16px"></i><span>PAN Card</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'PAN Card')"></label>
+                <label class="doc-btn"><i class="ti ti-credit-card" style="color:var(--purple);font-size:16px"></i><span>Aadhaar Card</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Aadhaar Card')"></label>
+                <label class="doc-btn"><i class="ti ti-passport" style="color:var(--green);font-size:16px"></i><span>Passport</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Passport')"></label>
+                <label class="doc-btn"><i class="ti ti-car" style="color:var(--blue);font-size:16px"></i><span>Driving License</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Driving License')"></label>
+                <label class="doc-btn"><i class="ti ti-building-bank" style="color:var(--amber);font-size:16px"></i><span>Cancelled Cheque</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Cancelled Cheque')"></label>
+                <label class="doc-btn"><i class="ti ti-stethoscope" style="color:var(--red);font-size:16px"></i><span>Medical Report</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Medical Report')"></label>
+                <label class="doc-btn"><i class="ti ti-receipt" style="color:var(--text3);font-size:16px"></i><span>Income Proof</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Income Proof')"></label>
+                <label class="doc-btn"><i class="ti ti-home" style="color:var(--gold2);font-size:16px"></i><span>Address Proof</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Address Proof')"></label>
+                <label class="doc-btn"><i class="ti ti-file-medical" style="color:var(--red);font-size:16px"></i><span>Discharge Summary</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Discharge Summary')"></label>
+                <label class="doc-btn"><i class="ti ti-clipboard-list" style="color:var(--purple);font-size:16px"></i><span>Claim Details</span><input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleKYCSingleFile(this,'Claim Details')"></label>
+              </div>
+              <div id="kyc-upload-progress" style="display:none;margin-bottom:10px">
+                <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--text2)" id="kyc-progress-text">Uploading...</div>
+                <div style="height:6px;background:var(--ivory4);border-radius:3px;overflow:hidden"><div id="kyc-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold3));border-radius:3px;transition:width 0.3s;width:0%"></div></div>
+              </div>
+              <div id="kyc-queue-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
+            </div>
+            <div class="card" id="kyc-uploaded-docs-card" style="display:none"><div class="card-hdr" style="margin-bottom:12px"><span class="card-title">Uploaded Documents</span></div><div id="kyc-uploaded-docs-list" style="display:flex;flex-direction:column;gap:8px"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-outline" onclick="closeKYCForm()">Cancel</button>
+          <button class="btn btn-gold" id="kyc-save-btn" onclick="saveKYCClient()"><i class="ti ti-check"></i> Save Client & Upload All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOLLOW-UPS TODAY -->
+    <div class="view" id="view-followups">
+      <div class="page-hdr"><div><h1>Follow-ups Today</h1><p id="followup-date-label"></p></div>
+        <select id="fu-filter-emp" onchange="loadFollowups()" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:12.5px;color:var(--text2);font-family:'DM Sans',sans-serif;outline:none"><option value="">All Employees</option></select>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card"><div class="stat-icon" style="background:#C0392B15;border-color:#C0392B30"><i class="ti ti-alert-circle" style="color:var(--red)"></i></div><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--red)" id="fu-overdue">—</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-clock"></i></div><div class="stat-label">Due Today</div><div class="stat-value" style="color:var(--gold)" id="fu-today">—</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#1A7A4A15;border-color:#1A7A4A30"><i class="ti ti-calendar-event" style="color:var(--green)"></i></div><div class="stat-label">Due Tomorrow</div><div class="stat-value" style="color:var(--green)" id="fu-tomorrow">—</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-alert-circle"></i> Overdue</div>
+      <div class="card" style="padding:0;margin-bottom:18px"><div class="table-wrap"><table><thead><tr><th>Client</th><th>Mobile</th><th>Product</th><th>Overdue Since</th><th>Assigned To</th><th>Stage</th><th>Action</th></tr></thead><tbody id="fu-overdue-tbody"></tbody></table></div></div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-clock"></i> Due Today</div>
+      <div class="card" style="padding:0;margin-bottom:18px"><div class="table-wrap"><table><thead><tr><th>Client</th><th>Mobile</th><th>Product</th><th>Stage</th><th>Assigned To</th><th>Action</th></tr></thead><tbody id="fu-today-tbody"></tbody></table></div></div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-calendar-event"></i> Due Tomorrow</div>
+      <div class="card" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Client</th><th>Mobile</th><th>Product</th><th>Stage</th><th>Assigned To</th></tr></thead><tbody id="fu-tomorrow-tbody"></tbody></table></div></div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="view" id="view-calendar">
+      <div class="page-hdr"><div><h1>Calendar</h1><p>Follow-ups, tasks and meetings in one view</p></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="changeCalMonth(-1)" class="btn btn-outline" style="padding:6px 12px"><i class="ti ti-chevron-left"></i></button>
+          <span id="cal-month-label" style="font-size:14px;font-weight:500;min-width:140px;text-align:center"></span>
+          <button onclick="changeCalMonth(1)" class="btn btn-outline" style="padding:6px 12px"><i class="ti ti-chevron-right"></i></button>
+          <button onclick="goToday()" class="btn btn-outline" style="font-size:12px">Today</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border2)">
+          <div style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Sun</div>
+          <div style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Mon</div>
+          <div style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Tue</div>
+          <div style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Wed</div>
+          <div style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Thu</div>
+          <div style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Fri</div>
+          <div style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Sat</div>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)"><div style="width:12px;height:12px;border-radius:3px;background:var(--gold)"></div>Follow-up due</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)"><div style="width:12px;height:12px;border-radius:3px;background:var(--red)"></div>Overdue</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)"><div style="width:12px;height:12px;border-radius:3px;background:var(--blue)"></div>Task due</div>
+      </div>
+    </div>
+
+    <!-- IMPORT -->
+    <div class="view" id="view-import">
+      <div class="page-hdr"><div><h1>Import Leads</h1><p>Bulk upload from CSV or Excel</p></div><button onclick="downloadTemplate()" class="btn btn-outline" style="font-size:12px"><i class="ti ti-download"></i> Download Template</button></div>
+      <div class="grid-2">
+        <div class="card"><div class="card-hdr" style="margin-bottom:14px"><span class="card-title">Upload File</span></div>
+          <div id="import-drop-zone" style="border:2px dashed var(--border3);border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:14px" ondragover="event.preventDefault();this.style.borderColor='var(--gold)';this.style.background='var(--gold-light)'" ondragleave="this.style.borderColor='';this.style.background=''" ondrop="handleImportDrop(event)" onclick="document.getElementById('import-file-input').click()">
+            <i class="ti ti-file-spreadsheet" style="font-size:40px;color:var(--text4);display:block;margin-bottom:12px"></i>
+            <p style="font-size:14px;font-weight:500;margin-bottom:6px">Drop your CSV or Excel file here</p>
+            <p style="font-size:12px;color:var(--text4)">.csv · .xlsx · .xls · Max 5MB</p>
+          </div>
+          <input type="file" id="import-file-input" style="display:none" accept=".csv,.xlsx,.xls" onchange="handleImportFile(this.files[0])">
+          <div id="import-status" style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:12px"></div>
+          <div class="tip-box"><div style="font-weight:500;margin-bottom:6px"><i class="ti ti-info-circle"></i> Required columns</div><div style="font-size:11px;line-height:1.8">full_name · mobile · product · stage · assigned_name<br>Optional: email · city · pan_number · aadhaar_number · follow_up_date · notes</div></div>
+        </div>
+        <div class="card"><div class="card-hdr" style="margin-bottom:14px"><span class="card-title">Preview & Confirm</span></div>
+          <div id="import-preview"><div style="text-align:center;padding:40px;color:var(--text4)"><i class="ti ti-table" style="font-size:36px;display:block;margin-bottom:10px;opacity:0.3"></i>Upload a file to preview</div></div>
+          <div id="import-confirm-bar" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border2);justify-content:space-between;align-items:center">
+            <span id="import-row-count" style="font-size:13px;color:var(--text2)">0 rows</span>
+            <button class="btn btn-gold" onclick="confirmImport()" id="import-btn"><i class="ti ti-database-import"></i> Import All</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="import-log-card" style="margin-top:14px;display:none"><div class="card-hdr" style="margin-bottom:12px"><span class="card-title">Import Results</span></div><div id="import-log"></div></div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="view" id="view-analytics">
+      <div class="page-hdr"><div><h1>Analytics &amp; Reports</h1><p>Performance insights</p></div></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-percentage"></i></div><div class="stat-label">Conversion Rate</div><div class="stat-value" style="color:var(--green)" id="a-conv">—</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-users"></i></div><div class="stat-label">Total Leads</div><div class="stat-value" id="a-leads">—</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-certificate"></i></div><div class="stat-label">Policies Issued</div><div class="stat-value" style="color:var(--gold)" id="a-policies">—</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="ti ti-ticket"></i></div><div class="stat-label">Open Tickets</div><div class="stat-value" style="color:var(--amber)" id="a-tickets">—</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-hdr"><span class="card-title">Leads by Stage</span></div><div class="chart-wrap"><canvas id="analytics-chart"></canvas></div></div>
+        <div class="card"><div class="card-hdr"><span class="card-title">Product Mix</span></div><div class="chart-wrap"><canvas id="product-chart"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><div class="card-hdr" style="margin-bottom:14px"><span class="card-title">Employee Productivity</span></div><div id="emp-productivity"></div></div>
+    </div>
+
+    <!-- AUDIT LOG -->
+    <div class="view" id="view-audit">
+      <div class="page-hdr"><div><h1>Audit Log</h1><p>Complete activity trail · Admin only</p></div></div>
+      <div class="card" style="padding:0"><div class="table-wrap"><table>
+        <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Module</th><th>Details</th></tr></thead>
+        <tbody id="audit-tbody"><tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text4)"><i class="spin ti ti-loader"></i> Loading...</td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div class="view" id="view-employees">
+      <div class="page-hdr"><div><h1>Employees</h1><p id="emp-count">Loading...</p></div></div>
+      <div class="card" style="padding:0"><div class="table-wrap"><table>
+        <thead><tr><th>Employee</th><th>Role</th><th>Leads Assigned</th><th>Conversions</th><th>Task Completion</th><th>Status</th></tr></thead>
+        <tbody id="emp-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text4)"><i class="spin ti ti-loader"></i> Loading...</td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <div class="page-hdr"><div><h1>Settings</h1><p>Admin configuration</p></div></div>
+      <div style="max-width:600px">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-hdr" style="margin-bottom:16px"><span class="card-title">Company Details</span></div>
+          <div class="form-grid">
+            <div class="fld form-full"><label>Company Name</label><input type="text" id="set-company" value="MyAdvisor Insurance Pvt. Ltd."></div>
+            <div class="fld form-full"><label>Admin Email</label><input type="email" id="set-email" value="dhruvpawashe@uppercrustwealth.com"></div>
+            <div class="fld"><label>Time Zone</label><select id="set-tz"><option>Asia/Kolkata (IST)</option><option>UTC</option></select></div>
+          </div>
+          <div style="margin-top:16px"><button class="btn btn-gold" onclick="showToast('Settings saved!','success')"><i class="ti ti-check"></i> Save Settings</button></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr" style="margin-bottom:16px"><span class="card-title">Team Login Credentials</span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Name</th><th>Email</th><th>Password</th><th>Role</th></tr></thead>
+            <tbody id="creds-tbody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- UNIVERSAL DRAWER -->
+<div class="overlay" id="overlay" onclick="closeDrawer(event)">
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-hdr">
+      <div><div style="font-size:16px;font-weight:600;color:var(--black2)" id="drawer-title">New Lead</div><div style="font-size:11px;color:var(--text3);margin-top:3px" id="drawer-sub">Fields marked * are required</div></div>
+      <button style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:4px" onclick="closeDrawer()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+    <div class="drawer-footer">
+      <button class="btn btn-outline" onclick="closeDrawer()">Cancel</button>
+      <button class="btn btn-gold" id="drawer-save-btn" onclick="saveDrawer()"><i class="ti ti-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══ CONFIG ══ */
+const SUPABASE_URL='https://hnomftsnwpmxiareteei.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhub21mdHNud3BteGlhcmV0ZWVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0OTA3NzcsImV4cCI6MjA5NDA2Njc3N30.5Ncg3nL60jt0eLl3ndQnWVxnLhGzT19FuXgj7mQgUwM';
+let DB=null;
+let currentUser=null,currentRole='employee';
+let allLeads=[],drawerType='lead',drawerLeadId=null;
+let convChart,stageChart,analyticsChart,productChart;
+let currentTicketId=null,chatRefreshInterval=null;
+let kycQueue=[],currentKYCClientId=null,allKYCClients=[];
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+let importData=[];
+
+const TEAM=[
+  {email:'dhruvpawashe@uppercrustwealth.com',password:'Admin@1409',name:'Dhruv Pawashe',role:'admin'},
+  {email:'hiremore@myadvisor.in',password:'Hire@1234',name:'Hire More',role:'employee'},
+  {email:'pranav@myadvisor.in',password:'Pranav@1234',name:'Pranav Bhagat',role:'employee'},
+  {email:'rupali@myadvisor.in',password:'Rupali@1234',name:'Rupali Jadav',role:'employee'},
+  {email:'haresh@myadvisor.in',password:'Haresh@1234',name:'Haresh Patel',role:'employee'},
+  {email:'jignesh@myadvisor.in',password:'Jignesh@1234',name:'Jignesh Bariya',role:'employee'},
+  {email:'ashwin@myadvisor.in',password:'Ashwin@1234',name:'Ashwin',role:'employee'},
+  {email:'nilesh@myadvisor.in',password:'Nilesh@1234',name:'Nilesh Upadhyay',role:'employee'},
+  {email:'pranami@myadvisor.in',password:'Pranami@1234',name:'Pranami Deo',role:'employee'},
+];
+const EMPLOYEES=TEAM.filter(t=>t.role==='employee').map(t=>t.name);
+const STAGES=['New Lead','Contacted','Interested','Meeting Scheduled','Follow-up Pending','Documentation Pending','Proposal Shared','Payment Pending','Policy Issued','Closed Won','Closed Lost'];
+const COLORS=['#1A4A8A','#1A7A4A','#5A2D82','#B8730A','#C0392B','#0F6E56','#854F0B','#3C3489'];
+
+/* ══ INIT ══ */
+try{DB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){console.log('Supabase init error:',e);}
+
+/* ══ AUTH ══ */
+async function doLogin(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const btn=document.getElementById('login-btn');
+  const err=document.getElementById('auth-err');
+  err.textContent='';
+  if(!email||!pass){err.textContent='Please enter email and password';return;}
+  btn.innerHTML='<i class="spin ti ti-loader"></i> Signing in...';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,600));
+  const user=TEAM.find(u=>u.email.toLowerCase()===email.toLowerCase()&&u.password===pass);
+  btn.innerHTML='Sign In';btn.disabled=false;
+  if(!user){err.textContent='Invalid email or password';return;}
+  currentUser={id:user.email,email:user.email,name:user.name};
+  currentRole=user.role;
+  enterApp(user.name,user.role);
+}
+
+function doLogout(){
+  currentUser=null;currentRole='employee';allLeads=[];
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-email').value='';
+  document.getElementById('auth-pass').value='';
+  document.getElementById('auth-err').textContent='';
+}
+
+function enterApp(name,role){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('sidebar-name').textContent=name;
+  document.getElementById('sidebar-av').textContent=name.substring(0,2).toUpperCase();
+  document.getElementById('sidebar-role').textContent=role==='admin'?'Admin · Super Access':'Advisor';
+  document.getElementById('dash-name').textContent=name.split(' ')[0];
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  // Hide admin items for employees
+  if(role!=='admin'){
+    document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
+  }
+  // Populate settings creds
+  if(role==='admin'){
+    const tbody=document.getElementById('creds-tbody');
+    if(tbody)tbody.innerHTML=TEAM.map(u=>`<tr><td>${u.name}</td><td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--blue)">${u.email}</td><td style="font-family:'DM Mono',monospace;font-size:12px">${u.password}</td><td><span class="badge ${u.role==='admin'?'b-gold':'b-green'}">${u.role}</span></td></tr>`).join('');
+  }
+  // Populate follow-up emp filter
+  const fuSel=document.getElementById('fu-filter-emp');
+  if(fuSel){EMPLOYEES.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;fuSel.appendChild(o);});}
+  // Load data
+  loadLeads();
+  loadTasks();
+  loadTickets();
+  if(role==='admin'){loadAudit();loadEmployees();}
+  initRealtime();
+}
+
+/* ══ NAVIGATION ══ */
+const VIEW_TITLES={dashboard:'Dashboard',leads:'All Leads',pipeline:'Pipeline',tasks:'Tasks',tickets:'Tickets',kyc:'KYC Vault',followups:'Follow-ups Today',calendar:'Calendar',import:'Import Leads',analytics:'Analytics',audit:'Audit Log',employees:'Employees',settings:'Settings'};
+
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  const el=document.getElementById('view-'+v);if(el)el.classList.add('active');
+  const nav=document.getElementById('nav-'+v);if(nav)nav.classList.add('active');
+  document.getElementById('page-title').textContent=VIEW_TITLES[v]||v;
+  if(v==='analytics')setTimeout(initAnalyticsCharts,100);
+  if(v==='pipeline')loadPipeline();
+  if(v==='kyc')loadKYCVault();
+  if(v==='followups')loadFollowups();
+  if(v==='calendar')renderCalendar();
+}
+
+/* ══ HELPERS ══ */
+function stageBadge(s){const m={'New Lead':'b-gray','Contacted':'b-blue','Interested':'b-blue','Meeting Scheduled':'b-purple','Follow-up Pending':'b-amber','Documentation Pending':'b-red','Proposal Shared':'b-gold','Payment Pending':'b-amber','Policy Issued':'b-green','Closed Won':'b-green','Closed Lost':'b-gray'};return `<span class="badge ${m[s]||'b-gray'}">${s||'New Lead'}</span>`;}
+function priorityBadge(p){const m={High:'b-red',Medium:'b-amber',Low:'b-green',Urgent:'b-red',Normal:'b-gray'};return `<span class="badge ${m[p]||'b-gray'}">${p||'Normal'}</span>`;}
+function statusBadge(s){const m={'Open':'b-amber','In Progress':'b-blue','Waiting':'b-gray','Resolved':'b-green','Closed':'b-gray','Pending':'b-gray','Completed':'b-green','Delayed':'b-red','Active':'b-green','On Leave':'b-amber','Uploaded':'b-blue','Verified':'b-green'};return `<span class="badge ${m[s]||'b-gray'}">${s||'—'}</span>`;}
+function actionBadge(a){const m={UPDATE:'b-blue',UPLOAD:'b-green',ASSIGN:'b-purple',CREATE:'b-gold',DELETE:'b-red',LOGIN:'b-gray'};return `<span class="badge ${m[a]||'b-gray'}">${a}</span>`;}
+function formatDate(d){if(!d)return '—';try{const dt=new Date(d);return isNaN(dt)?d:dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'});}catch(e){return d;}}
+function timeAgo(d){if(!d)return '—';try{const diff=Date.now()-new Date(d);const h=Math.floor(diff/3600000);if(h<1)return '<1h ago';if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}catch(e){return '—';}}
+function v(id){const el=document.getElementById(id);return el?el.value:'';}
+function setEl(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+function scoreLeadLocally(lead){let s=50;if(lead.annual_income){const n=parseInt((lead.annual_income||'').replace(/\D/g,''));if(n>1000000)s+=15;else if(n>500000)s+=8;}if((lead.pan_number||'').length===10)s+=10;if((lead.aadhaar_number||'').replace(/\s/g,'').length===12)s+=8;if((lead.mobile||'').length>=10)s+=5;if(lead.email)s+=5;const sb={Contacted:5,Interested:10,'Meeting Scheduled':15,'Proposal Shared':20,'Payment Pending':25,'Policy Issued':30};s+=sb[lead.stage]||0;if(['Term Life','ULIP','Health Plan'].includes(lead.product))s+=7;return Math.min(100,Math.max(0,s));}
+function scoreColor(s){return s>=75?'var(--green)':s>=50?'var(--gold)':'var(--red)';}
+function scoreLabel(s){return s>=75?'Hot':s>=50?'Warm':'Cold';}
+
+async function logAudit(action,module,details){
+  try{if(DB)await DB.from('audit_logs').insert({user_name:currentUser.name,action,module,details,created_at:new Date().toISOString()});}catch(e){}
+}
+
+/* ══ DASHBOARD ══ */
+async function initDashboard(){
+  // Leaderboard placeholder
+  const lb=document.getElementById('leaderboard-list');
+  if(lb)lb.innerHTML=EMPLOYEES.map((e,i)=>`<div class="leader-row"><div class="leader-av" style="background:${COLORS[i]}">${e.split(' ').map(w=>w[0]).join('').substring(0,2)}</div><div style="flex:1"><div style="font-size:12.5px;font-weight:500">${e}</div></div><div class="leader-bar"><div class="leader-fill" style="width:0%"></div></div><span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--gold);min-width:24px;text-align:right" id="lb-${i}">0</span></div>`).join('');
+
+  if(!DB)return;
+  try{
+    const {data:leads}=await DB.from('leads').select('id,stage,follow_up_date,assigned_name');
+    if(leads){
+      const today=new Date().toISOString().split('T')[0];
+      setEl('stat-leads',leads.length.toLocaleString());
+      setEl('stat-active',leads.filter(l=>!['Policy Issued','Closed Won','Closed Lost'].includes(l.stage)).length.toLocaleString());
+      setEl('stat-policies',leads.filter(l=>['Policy Issued','Closed Won'].includes(l.stage)).length.toLocaleString());
+      setEl('stat-followups',leads.filter(l=>l.follow_up_date===today).length.toLocaleString());
+      // Update leaderboard
+      EMPLOYEES.forEach((e,i)=>{
+        const cnt=leads.filter(l=>l.assigned_name===e).length;
+        const max=Math.max(...EMPLOYEES.map(m=>leads.filter(l=>l.assigned_name===m).length),1);
+        const el=document.getElementById('lb-'+i);if(el)el.textContent=cnt;
+        const fill=lb&&lb.querySelectorAll('.leader-fill')[i];if(fill)fill.style.width=Math.round(cnt/max*100)+'%';
+      });
+    }
+    const {data:tasks}=await DB.from('tasks').select('id,status');
+    if(tasks){setEl('t-total',tasks.length);setEl('t-done',tasks.filter(t=>t.status==='Completed').length);setEl('t-prog',tasks.filter(t=>t.status==='In Progress').length);setEl('t-delay',tasks.filter(t=>t.status==='Delayed').length);}
+  }catch(e){console.log('Dashboard error:',e);}
+  loadDashTasks();loadDashTickets();loadRenewalTracker();
+  setTimeout(initDashCharts,300);
+}
+
+async function loadDashTasks(){
+  const el=document.getElementById('dash-tasks');if(!el)return;
+  let tasks=[];
+  try{if(DB){let q=DB.from('tasks').select('*').order('created_at',{ascending:false}).limit(4);if(currentRole!=='admin')q=q.eq('assigned_name',currentUser.name);const {data}=await q;if(data)tasks=data;}}catch(e){}
+  if(!tasks.length){el.innerHTML='<p style="font-size:12px;color:var(--text4);text-align:center;padding:16px">No tasks yet</p>';return;}
+  el.innerHTML=tasks.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:7px;background:var(--ivory3);margin-bottom:6px"><div style="width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border3);background:${t.status==='Completed'?'var(--green)':'var(--ivory2)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">${t.status==='Completed'?'<i class="ti ti-check" style="font-size:10px;color:white"></i>':''}</div><span style="font-size:12px;flex:1;${t.status==='Completed'?'text-decoration:line-through;color:var(--text4)':''}">${(t.title||'').substring(0,40)}</span></div>`).join('');
+}
+
+async function loadDashTickets(){
+  const el=document.getElementById('dash-tickets');if(!el)return;
+  let tickets=[];
+  try{if(DB){const {data}=await DB.from('tickets').select('*').order('created_at',{ascending:false}).limit(3);if(data){tickets=currentRole==='admin'?data:data.filter(t=>t.assigned_name===currentUser.name||t.raised_name===currentUser.name);}}}catch(e){}
+  if(!tickets.length){el.innerHTML='<p style="font-size:12px;color:var(--text4);text-align:center;padding:16px">No tickets yet</p>';return;}
+  el.innerHTML=tickets.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)"><div style="width:6px;height:6px;border-radius:50%;background:${t.priority==='High'?'var(--red)':t.priority==='Medium'?'var(--amber)':'var(--green)'};flex-shrink:0"></div><span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text4);min-width:58px">#TK-${String(t.id).padStart(4,'0')}</span><div style="flex:1"><p style="font-size:12px;font-weight:500">${(t.subject||'').substring(0,28)}</p><span style="font-size:11px;color:var(--text4)">→ ${t.assigned_name||'—'}</span></div></div>`).join('');
+}
+
+// Feature 4: Policy Renewal Tracker
+function loadRenewalTracker(){
+  const el=document.getElementById('renewal-list');if(!el)return;
+  const today=new Date();const in30=new Date(today.getTime()+30*86400000);
+  const todayStr=today.toISOString().split('T')[0];const in30Str=in30.toISOString().split('T')[0];
+  const renewals=allLeads.filter(l=>l.policy_due_date&&l.policy_due_date>=todayStr&&l.policy_due_date<=in30Str&&!['Closed Won','Closed Lost'].includes(l.stage));
+  renewals.sort((a,b)=>a.policy_due_date.localeCompare(b.policy_due_date));
+  if(!renewals.length){el.innerHTML='<p style="font-size:12px;color:var(--text4);text-align:center;padding:16px 0">No policy renewals in next 30 days</p>';return;}
+  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><thead><tr>${['Client','Mobile','Product','Due Date','Days Left','Assigned To','Action'].map(h=>`<th style="padding:8px 12px;text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text3);border-bottom:1px solid var(--border2)">${h}</th>`).join('')}</tr></thead><tbody>${renewals.map(l=>{const daysLeft=Math.ceil((new Date(l.policy_due_date)-today)/86400000);const urgColor=daysLeft<=7?'var(--red)':daysLeft<=15?'var(--amber)':'var(--green)';const waLink=l.mobile?`<a href="https://wa.me/${(l.mobile||'').replace(/\D/g,'')}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:#25D36620;border:1px solid #25D36640;border-radius:5px;font-size:11px;color:#25D366;text-decoration:none"><i class="ti ti-brand-whatsapp" style="font-size:11px"></i> Remind</a>`:'';return `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openLeadDetail(${l.id})"><td style="padding:9px 12px;font-weight:500;color:var(--black2)">${l.full_name}</td><td style="padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px">${l.mobile||'—'}</td><td style="padding:9px 12px">${l.product||'—'}</td><td style="padding:9px 12px;font-weight:500;color:${urgColor}">${formatDate(l.policy_due_date)}</td><td style="padding:9px 12px"><span style="font-weight:600;color:${urgColor}">${daysLeft}d</span></td><td style="padding:9px 12px">${l.assigned_name||'—'}</td><td style="padding:9px 12px" onclick="event.stopPropagation()">${waLink}</td></tr>`;}).join('')}</tbody></table></div>`;
+}
+
+/* ══ LEADS ══ */
+async function loadLeads(){
+  const tbody=document.getElementById('leads-tbody');
+  if(tbody)tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text4)"><i class="spin ti ti-loader"></i> Loading...</td></tr>';
+  let leads=[];
+  try{if(DB){let q=DB.from('leads').select('*').order('updated_at',{ascending:false});if(currentRole!=='admin')q=q.eq('assigned_name',currentUser.name);const {data,error}=await q;if(!error&&data)leads=data;}}catch(e){console.log('Leads error:',e);}
+  allLeads=leads;
+  setEl('leads-count',leads.length+' total leads');
+  renderLeads(leads);
+  const emps=[...new Set(leads.map(l=>l.assigned_name).filter(Boolean))];
+  const sel=document.getElementById('filter-emp');if(sel){sel.innerHTML='<option value="">All Employees</option>'+emps.map(e=>`<option>${e}</option>`).join('');}
+  initDashboard();
+}
+
+function renderLeads(leads){
+  const tbody=document.getElementById('leads-tbody');if(!tbody)return;
+  if(!leads.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text4)">No leads yet. Click + Add Lead to get started.</td></tr>';return;}
+  const today=new Date().toISOString().split('T')[0];
+  const isClosed=l=>['Closed Won','Closed Lost'].includes(l.stage);
+  tbody.innerHTML=leads.map(l=>{
+    const s=scoreLeadLocally(l);
+    const closed=isClosed(l);
+    const closedInfo=closed&&l.closed_by?`<div style="font-size:11px;font-weight:500;color:var(--text2)">${l.closed_by}</div><div style="font-size:10px;color:var(--text4)">${formatDate(l.closed_at)}</div>`:'<span style="color:var(--text4);font-size:11px">—</span>';
+    const actionBtn=closed
+      ?`<button onclick="event.stopPropagation();reopenLead(${l.id})" style="background:#1A7A4A15;border:1px solid #1A7A4A25;color:#1A7A4A;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif"><i class="ti ti-refresh" style="font-size:11px"></i> Reopen</button>`
+      :`<button onclick="event.stopPropagation();closeLead(${l.id})" style="background:#C0392B12;border:1px solid #C0392B25;color:var(--red);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif"><i class="ti ti-x" style="font-size:11px"></i> Close</button>`;
+    // WhatsApp button
+    const waBtn=l.mobile?`<a href="https://wa.me/${(l.mobile||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp ${l.full_name}" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:#25D366;border-radius:5px;color:#fff;text-decoration:none;flex-shrink:0"><i class="ti ti-brand-whatsapp" style="font-size:13px"></i></a>`:'';
+    // Quick stage select
+    const stageSelect=`<select onclick="event.stopPropagation()" onchange="quickStageUpdate(${l.id},this.value,this)" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:6px;padding:2px 6px;font-size:11px;color:var(--text2);outline:none;font-family:'DM Sans',sans-serif;max-width:130px">${STAGES.map(s2=>`<option ${l.stage===s2?'selected':''}>${s2}</option>`).join('')}</select>`;
+    return `<tr style="${closed?'opacity:0.65':''}">
+      <td onclick="openLeadDetail(${l.id})" style="cursor:pointer">${l.full_name||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px"><div style="display:flex;align-items:center;gap:6px">${l.mobile||'—'}${waBtn}</div></td>
+      <td onclick="openLeadDetail(${l.id})" style="cursor:pointer">${l.product||'—'}</td>
+      <td>${stageSelect}</td>
+      <td onclick="openLeadDetail(${l.id})" style="cursor:pointer">${l.assigned_name||'—'}</td>
+      <td onclick="openLeadDetail(${l.id})" style="cursor:pointer;color:${l.follow_up_date&&l.follow_up_date<=today?'var(--red)':'var(--text2)'}">${formatDate(l.follow_up_date)}</td>
+      <td onclick="openLeadDetail(${l.id})" style="cursor:pointer"><span style="font-size:12px;font-weight:600;color:${scoreColor(s)}">${s}</span><span style="font-size:10px;color:var(--text4);margin-left:4px">${scoreLabel(s)}</span></td>
+      <td>${closedInfo}</td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function quickStageUpdate(id,stage,selectEl){
+  if(!DB){showToast('Not connected','error');if(selectEl)selectEl.value=allLeads.find(l=>l.id===id)?.stage||stage;return;}
+  const lead=allLeads.find(l=>l.id===id);if(!lead||lead.stage===stage)return;
+  const oldStage=lead.stage;lead.stage=stage;
+  try{
+    await DB.from('leads').update({stage,updated_at:new Date().toISOString()}).eq('id',id);
+    await logAudit('UPDATE','Leads',`${lead.full_name}: ${oldStage} → ${stage}`);
+    showToast(`${lead.full_name} → ${stage}`,'success');
+    if(selectEl){selectEl.style.color='#1A7A4A';setTimeout(()=>{selectEl.style.color='';},1500);}
+    // Refresh without full reload for speed
+    allLeads=allLeads.map(l=>l.id===id?{...l,stage}:l);
+    initDashboard();
+  }catch(e){lead.stage=oldStage;if(selectEl)selectEl.value=oldStage;showToast('Update failed: '+e.message,'error');}
+}
+
+// Feature 3: Duplicate lead detection
+async function checkDuplicateLead(mobile,pan){
+  if(!DB||!mobile)return null;
+  try{
+    let q=DB.from('leads').select('id,full_name,mobile,pan_number,stage');
+    const filters=[`mobile.eq.${mobile}`];
+    if(pan&&pan.length===10)filters.push(`pan_number.eq.${pan}`);
+    const {data}=await q.or(filters.join(','));
+    return data&&data.length?data:null;
+  }catch(e){return null;}
+}
+
+function filterLeads(){const stage=v('filter-stage');const emp=v('filter-emp');let f=allLeads;if(stage)f=f.filter(l=>(l.stage||'New Lead')===stage);if(emp)f=f.filter(l=>l.assigned_name===emp);renderLeads(f);}
+
+async function closeLead(id){
+  if(!DB)return;
+  const lead=allLeads.find(l=>l.id===id);if(!lead)return;
+  const stage=confirm(`Close "${lead.full_name}" — OK = Closed Lost, Cancel = Closed Won`)?'Closed Lost':'Closed Won';
+  try{
+    await DB.from('leads').update({stage,closed_by:currentUser.name,closed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',id);
+    await logAudit('UPDATE','Leads',`Lead closed: ${lead.full_name} (${lead.product||'—'}) → ${stage} by ${currentUser.name}`);
+    showToast(`${lead.full_name} marked ${stage}`,'success');
+    await loadLeads();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+async function reopenLead(id){
+  if(!DB)return;
+  const lead=allLeads.find(l=>l.id===id);if(!lead)return;
+  try{
+    await DB.from('leads').update({stage:'Follow-up Pending',closed_by:null,closed_at:null,updated_at:new Date().toISOString()}).eq('id',id);
+    await logAudit('UPDATE','Leads',`Lead reopened: ${lead.full_name} (${lead.product||'—'}) by ${currentUser.name}`);
+    showToast(`${lead.full_name} reopened`,'success');
+    await loadLeads();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+function globalSearch(q){if(!q){renderLeads(allLeads);return;}const lq=q.toLowerCase();renderLeads(allLeads.filter(l=>(l.full_name||'').toLowerCase().includes(lq)||(l.mobile||'').includes(q)||(l.pan_number||'').toLowerCase().includes(lq)||(l.aadhaar_number||'').includes(q)||(l.product||'').toLowerCase().includes(lq)||(l.assigned_name||'').toLowerCase().includes(lq)));}
+
+function openLeadDetail(id){const lead=allLeads.find(l=>l.id===id)||{};openDrawer('lead-detail',lead);}
+
+function exportCSV(){
+  const headers=['Name','Mobile','Email','DOB','Product','Premium','Policy Due Date','Stage','Assigned To','Follow-up Date','City','State','Occupation','Annual Income','PAN','Aadhaar','Nominee','Smoking','Alcohol','Diabetes','Blood Pressure','Notes','Closed By','Closed At','Created At'];
+  const rows=[headers,...allLeads.map(l=>[
+    l.full_name,l.mobile,l.email,l.dob,l.product,l.premium,l.policy_due_date,l.stage,l.assigned_name,l.follow_up_date,l.city,l.state,l.occupation,l.annual_income,l.pan_number,l.aadhaar_number,l.nominee,l.smoking_status,l.alcohol_status,l.diabetes,l.blood_pressure,l.notes,l.closed_by,l.closed_at,l.created_at
+  ])];
+  const csv=rows.map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`leads_export_${new Date().toISOString().split('T')[0]}.csv`;a.click();URL.revokeObjectURL(url);
+  showToast(`✓ Exported ${allLeads.length} leads`,'success');
+}
+
+function previewLeadAttachments(files){
+  const el=document.getElementById('f-attach-preview');if(!el)return;
+  el.innerHTML=Array.from(files).map(f=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--ivory3);border-radius:7px;border:1px solid var(--border2)"><i class="ti ti-file" style="color:var(--gold);font-size:14px;flex-shrink:0"></i><span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span><span style="font-size:11px;color:var(--text4)">${(f.size/1024).toFixed(0)}KB</span></div>`).join('');
+}
+
+/* ══ PIPELINE ══ */
+async function loadPipeline(){
+  if(!allLeads.length)await loadLeads();
+  const board=document.getElementById('pipeline-board');if(!board)return;
+  board.innerHTML=STAGES.filter(s=>!['Closed Lost'].includes(s)).map(stage=>{const items=allLeads.filter(l=>l.stage===stage);return `<div class="stage-col"><div class="stage-name">${stage}<span class="stage-count">${items.length}</span></div>${items.length?items.map(l=>`<div class="stage-card" onclick="openLeadDetail(${l.id})"><p>${l.full_name||'—'}</p><span>${l.product||'—'} · ${l.assigned_name||'—'}</span></div>`).join(''):'<div style="font-size:11px;color:var(--text4);text-align:center;padding:12px">Empty</div>'}</div>`;}).join('');
+}
+
+/* ══ TASKS ══ */
+async function loadTasks(){
+  let tasks=[];
+  try{if(DB){let q=DB.from('tasks').select('*').order('created_at',{ascending:false});if(currentRole!=='admin')q=q.eq('assigned_name',currentUser.name);const {data,error}=await q;if(!error&&data)tasks=data;}}catch(e){console.log('Tasks error:',e);}
+  setEl('t-total',tasks.length);setEl('t-done',tasks.filter(t=>t.status==='Completed').length);setEl('t-prog',tasks.filter(t=>t.status==='In Progress').length);setEl('t-delay',tasks.filter(t=>t.status==='Delayed').length);
+  setEl('tasks-count',`${tasks.length} tasks · ${tasks.filter(t=>t.status==='Completed').length} completed`);
+  const tbody=document.getElementById('tasks-tbody');if(!tbody)return;
+  if(!tasks.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text4)">No tasks yet. Click + Add Task to create one.</td></tr>';return;}
+  const today=new Date().toISOString().split('T')[0];
+  tbody.innerHTML=tasks.map(t=>`<tr><td>${t.title||'—'}</td><td>${t.assigned_name||'—'}</td><td>${priorityBadge(t.priority)}</td><td style="color:${t.due_date&&t.due_date<=today&&t.status!=='Completed'?'var(--red)':'var(--text2)'}">${formatDate(t.due_date)}</td><td>${statusBadge(t.status)}</td><td onclick="event.stopPropagation()"><select onchange="updateTaskStatus(${t.id},this.value)" style="background:var(--ivory2);border:1px solid var(--border2);border-radius:6px;padding:3px 6px;font-size:11px;color:var(--text2);outline:none;font-family:'DM Sans',sans-serif">${['Pending','In Progress','Completed','Delayed'].map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('');
+  loadDashTasks();
+}
+
+async function updateTaskStatus(id,status){try{if(DB){await DB.from('tasks').update({status,updated_at:new Date().toISOString()}).eq('id',id);await logAudit('UPDATE','Tasks',`Task #${id} → ${status}`);await loadTasks();}}catch(e){console.log('Task update error:',e);}}
+
+/* ══ TICKETS ══ */
+async function loadTickets(){
+  const tbody=document.getElementById('tickets-tbody');
+  if(tbody)tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text4)"><i class="spin ti ti-loader"></i> Loading...</td></tr>';
+  let tickets=[];
+  try{if(DB){const {data}=await DB.from('tickets').select('*').order('created_at',{ascending:false});if(data)tickets=currentRole==='admin'?data:data.filter(t=>t.assigned_name===currentUser.name||t.raised_name===currentUser.name);}}catch(e){console.log('Tickets error:',e);}
+  if(!tbody)return;
+  if(!tickets.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text4)">No tickets yet. Click + New Ticket to raise one.</td></tr>';return;}
+  tbody.innerHTML=tickets.map(t=>{
+    const isClosed=t.status==='Closed';
+    const clientProduct=`<div style="font-size:12.5px;font-weight:500">${t.client_name||'—'}</div><div style="font-size:11px;color:var(--text4)">${t.product||'—'}</div>`;
+    const raisedInfo=`<div style="font-size:12.5px">${t.raised_name||'—'}</div><div style="font-size:10px;color:var(--text4)">${formatDate(t.created_at)}</div>`;
+    const toggleBtn=isClosed
+      ?`<button onclick="event.stopPropagation();reopenTicket(${t.id})" style="background:#1A7A4A15;border:1px solid #1A7A4A25;color:#1A7A4A;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif"><i class="ti ti-refresh" style="font-size:11px"></i> Reopen</button>`
+      :`<button onclick="event.stopPropagation();closeTicket(${t.id})" style="background:#C0392B12;border:1px solid #C0392B25;color:var(--red);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif"><i class="ti ti-x" style="font-size:11px"></i> Close</button>`;
+    return `<tr onclick="openTicketChat(${t.id})" style="cursor:pointer;${isClosed?'opacity:0.65':''}"><td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)">#TK-${String(t.id).padStart(4,'0')}</td><td><strong>${t.subject||'—'}</strong></td><td>${clientProduct}</td><td>${raisedInfo}</td><td>${t.assigned_name||'—'}</td><td>${priorityBadge(t.priority)}</td><td>${formatDate(t.due_date)}</td><td>${statusBadge(t.status)}</td><td onclick="event.stopPropagation()">${toggleBtn}</td></tr>`;
+  }).join('');
+  loadDashTickets();
+}
+
+/* ══ TICKET CHAT ══ */
+async function openTicketChat(ticketId){
+  currentTicketId=ticketId;
+  document.getElementById('ticket-list-panel').style.display='none';
+  document.getElementById('ticket-chat-panel').style.display='block';
+  try{
+    const {data}=await DB.from('tickets').select('*').eq('id',ticketId).single();
+    if(data){
+      document.getElementById('chat-ticket-id').textContent=`#TK-${String(data.id).padStart(4,'0')}`;
+      document.getElementById('chat-ticket-subject').textContent=data.subject||'—';
+      document.getElementById('chat-status-select').value=data.status||'Open';
+      document.getElementById('chat-ticket-info').innerHTML=`<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Raised By</span><span>${data.raised_name||'—'}</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Assigned To</span><span>${data.assigned_name||'—'}</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Priority</span>${priorityBadge(data.priority)}</div><div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Due Date</span><span>${formatDate(data.due_date)}</span></div>${data.description?`<div style="margin-top:8px;padding:10px;background:var(--ivory3);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.5">${data.description}</div>`:''}`;
+    }
+  }catch(e){console.log('Ticket load error:',e);}
+  await loadChatMessages();
+  if(chatRefreshInterval)clearInterval(chatRefreshInterval);
+  chatRefreshInterval=setInterval(loadChatMessages,10000);
+}
+
+function closeTicketChat(){
+  currentTicketId=null;
+  if(chatRefreshInterval){clearInterval(chatRefreshInterval);chatRefreshInterval=null;}
+  document.getElementById('ticket-chat-panel').style.display='none';
+  document.getElementById('ticket-list-panel').style.display='block';
+}
+
+async function loadChatMessages(){
+  if(!currentTicketId||!DB)return;
+  try{
+    const {data}=await DB.from('ticket_comments').select('*').eq('ticket_id',currentTicketId).order('created_at',{ascending:true});
+    const container=document.getElementById('chat-messages');
+    if(!data||!data.length){container.innerHTML='<div style="text-align:center;color:var(--text4);font-size:12px;padding:40px"><i class="ti ti-message-circle" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.3"></i>No messages yet. Start the conversation.</div>';setEl('chat-msg-count','0 messages');return;}
+    setEl('chat-msg-count',`${data.length} message${data.length!==1?'s':''}`);
+    const myName=currentUser.name;
+    container.innerHTML=data.map(msg=>{
+      const isMe=msg.author_name===myName;const isFile=msg.is_file;const isBm=msg.is_bookmarked;
+      return `<div style="display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};gap:3px">
+        <div style="font-size:10px;color:var(--text4);margin-${isMe?'right':'left'}:8px">${isMe?'You':msg.author_name} · ${new Date(msg.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}${isBm?' <i class="ti ti-bookmark-filled" style="color:var(--gold)"></i>':''}</div>
+        <div class="${isMe?'chat-bubble-me':'chat-bubble-other'}">${isFile?`<div style="display:flex;align-items:center;gap:8px"><i class="ti ti-file" style="font-size:18px;flex-shrink:0"></i><div><div style="font-weight:500;font-size:12px">${msg.body}</div><div style="font-size:10px;opacity:0.7">Attachment</div></div>${msg.file_url?`<a href="${msg.file_url}" target="_blank" download style="margin-left:auto;color:inherit;opacity:0.8"><i class="ti ti-download" style="font-size:15px"></i></a>`:''}</div>`:msg.body}</div>
+        <div style="margin-${isMe?'right':'left'}:8px"><button onclick="bookmarkMsg(${msg.id},${!isBm})" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text4);padding:2px 4px"><i class="ti ti-bookmark${isBm?'-filled':''}" style="font-size:11px;color:${isBm?'var(--gold)':''}"></i> ${isBm?'Bookmarked':'Bookmark'}</button></div>
+      </div>`;
+    }).join('');
+    container.scrollTop=container.scrollHeight;
+    // Attachments
+    const atts=data.filter(m=>m.is_file);
+    const attEl=document.getElementById('chat-attachments');
+    if(attEl)attEl.innerHTML=atts.length?atts.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--ivory3);border-radius:8px;border:1px solid var(--border2)"><i class="ti ti-file" style="color:var(--gold);font-size:15px;flex-shrink:0"></i><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.body}</div><div style="font-size:10px;color:var(--text4)">${a.author_name} · ${formatDate(a.created_at)}</div></div>${a.file_url?`<a href="${a.file_url}" target="_blank" download style="color:var(--gold)"><i class="ti ti-download" style="font-size:14px"></i></a>`:''}</div>`).join(''):'<div style="font-size:11px;color:var(--text4);text-align:center;padding:12px">No attachments</div>';
+    // Bookmarks
+    const bms=data.filter(m=>m.is_bookmarked);
+    const bmEl=document.getElementById('chat-bookmarks');
+    if(bmEl)bmEl.innerHTML=bms.length?bms.map(b=>`<div style="padding:8px 10px;background:var(--gold-light);border:1px solid var(--gold-border);border-radius:8px"><div style="font-size:11px;font-weight:500;color:var(--black2);margin-bottom:2px">${b.is_file?'📎 '+b.body:(b.body||'').substring(0,50)+'...'}</div><div style="font-size:10px;color:var(--text3)">${b.author_name} · ${formatDate(b.created_at)}</div></div>`).join(''):'<div style="font-size:11px;color:var(--text4);text-align:center;padding:12px">Bookmark messages for quick recall</div>';
+  }catch(e){console.log('Chat messages error:',e);}
+}
+
+async function sendChatMessage(){
+  const input=document.getElementById('chat-input');const body=input.value.trim();if(!body||!currentTicketId||!DB)return;input.value='';
+  try{await DB.from('ticket_comments').insert({ticket_id:currentTicketId,author_name:currentUser.name,body,is_file:false,is_bookmarked:false,created_at:new Date().toISOString()});await DB.from('tickets').update({updated_at:new Date().toISOString(),status:'In Progress'}).eq('id',currentTicketId);await loadChatMessages();}catch(e){showToast('Send error: '+e.message,'error');}
+}
+
+async function sendChatFile(files){
+  if(!files||!files.length||!currentTicketId||!DB)return;
+  for(const file of Array.from(files)){
+    try{
+      let fileUrl='';
+      const fname=`tickets/${currentTicketId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+      try{const {data:sd}=await DB.storage.from('kyc-documents').upload(fname,file,{upsert:true});if(sd){const {data:ud}=DB.storage.from('kyc-documents').getPublicUrl(fname);fileUrl=ud?.publicUrl||'';}}catch(se){}
+      await DB.from('ticket_comments').insert({ticket_id:currentTicketId,author_name:currentUser.name,body:file.name,is_file:true,is_bookmarked:false,file_url:fileUrl,created_at:new Date().toISOString()});
+      await loadChatMessages();
+    }catch(e){showToast('File error: '+e.message,'error');}
+  }
+}
+
+async function bookmarkMsg(msgId,bookmarked){try{if(DB){await DB.from('ticket_comments').update({is_bookmarked:bookmarked}).eq('id',msgId);await loadChatMessages();}}catch(e){}}
+
+async function updateTicketStatusFromChat(){
+  if(!currentTicketId||!DB)return;const status=document.getElementById('chat-status-select').value;
+  try{await DB.from('tickets').update({status,updated_at:new Date().toISOString()}).eq('id',currentTicketId);await logAudit('UPDATE','Tickets',`Ticket #TK-${String(currentTicketId).padStart(4,'0')} → ${status}`);}catch(e){}
+}
+
+async function closeTicket(id){
+  if(!DB)return;
+  try{
+    await DB.from('tickets').update({status:'Closed',closed_by:currentUser.name,closed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',id);
+    await logAudit('UPDATE','Tickets',`Ticket #TK-${String(id).padStart(4,'0')} closed by ${currentUser.name}`);
+    await loadTickets();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+async function reopenTicket(id){
+  if(!DB)return;
+  try{
+    await DB.from('tickets').update({status:'Open',closed_by:null,closed_at:null,updated_at:new Date().toISOString()}).eq('id',id);
+    await logAudit('UPDATE','Tickets',`Ticket #TK-${String(id).padStart(4,'0')} reopened by ${currentUser.name}`);
+    await loadTickets();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+/* ══ KYC VAULT ══ */
+async function loadKYCVault(){
+  const grid=document.getElementById('kyc-clients-grid');if(!grid)return;
+  grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text4)"><i class="spin ti ti-loader" style="font-size:24px;display:block;margin-bottom:8px"></i>Loading...</div>';
+  let clients=[],docs=[];
+  try{if(DB){const {data:c}=await DB.from('kyc_clients').select('*').order('created_at',{ascending:false});if(c)clients=c;const {data:d}=await DB.from('documents').select('id,kyc_client_id,doc_type,status,file_url');if(d)docs=d;}}catch(e){console.log('KYC load error:',e);}
+  allKYCClients=clients;
+  setEl('kyc-stat-clients',clients.length);setEl('kyc-stat-docs',docs.length);setEl('kyc-stat-verified',docs.filter(d=>d.status==='Verified').length);setEl('kyc-stat-pending',docs.filter(d=>d.status==='Uploaded').length);
+  renderKYCClients(clients,docs);
+}
+
+function renderKYCClients(clients,docs){
+  const grid=document.getElementById('kyc-clients-grid');if(!grid)return;
+  if(!clients.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text4)"><i class="ti ti-users" style="font-size:40px;display:block;margin-bottom:12px;opacity:0.2"></i>No clients yet. Click "+ Add Client KYC" to get started.</div>';return;}
+  const keyDocs=['PAN Card','Aadhaar Card','Passport','Driving License','Medical Report','Discharge Summary','Claim Details'];
+  grid.innerHTML=clients.map((c,i)=>{
+    const cdocs=docs.filter(d=>d.kyc_client_id===c.id);
+    const initials=(c.full_name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `<div class="card" style="cursor:pointer;padding:16px;transition:border 0.2s" onclick="openKYCForm(${c.id})" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor=''">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+        <div style="width:40px;height:40px;border-radius:10px;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:var(--black2);margin-bottom:2px">${c.full_name}</div><div style="font-size:11px;color:var(--text3)">${c.mobile||'—'}${c.email?' · '+c.email:''}</div></div>
+        <div style="font-size:11px;color:var(--text4)">${cdocs.length} doc${cdocs.length!==1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        ${c.pan_number?`<span style="font-size:10px;background:var(--gold-light);color:var(--gold);padding:2px 7px;border-radius:10px;border:1px solid var(--gold-border)">PAN: ${c.pan_number}</span>`:''}
+        ${c.aadhaar_number?`<span style="font-size:10px;background:var(--ivory3);color:var(--text3);padding:2px 7px;border-radius:10px;border:1px solid var(--border2)">Aadhaar: ••••${c.aadhaar_number.slice(-4)}</span>`:''}
+        ${c.city?`<span style="font-size:10px;background:var(--ivory3);color:var(--text3);padding:2px 7px;border-radius:10px;border:1px solid var(--border2)">${c.city}</span>`:''}
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:4px">${keyDocs.map(dt=>{const has=cdocs.find(d=>d.doc_type===dt);return `<span title="${dt}" style="width:20px;height:20px;border-radius:4px;background:${has?'var(--green)':'var(--ivory4)'};display:flex;align-items:center;justify-content:center"><i class="ti ti-${has?'check':'minus'}" style="font-size:10px;color:${has?'#fff':'var(--text4)'}"></i></span>`;}).join('')}</div>
+        <span style="font-size:11px;color:var(--gold);font-weight:500">Edit →</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function searchKYC(q){
+  const docFilter=v('kyc-filter-doc');let filtered=allKYCClients;
+  if(q){const lq=q.toLowerCase();filtered=filtered.filter(c=>(c.full_name||'').toLowerCase().includes(lq)||(c.mobile||'').includes(q)||(c.email||'').toLowerCase().includes(lq)||(c.pan_number||'').toLowerCase().includes(lq)||(c.aadhaar_number||'').includes(q)||(c.dl_number||'').toLowerCase().includes(lq)||(c.voter_id||'').toLowerCase().includes(lq)||(c.city||'').toLowerCase().includes(lq));}
+  let docs=[];try{if(DB){const {data}=await DB.from('documents').select('id,kyc_client_id,doc_type,status,file_url');if(data)docs=data;}}catch(e){}
+  if(docFilter){const ids=docs.filter(d=>d.doc_type===docFilter).map(d=>d.kyc_client_id);filtered=filtered.filter(c=>ids.includes(c.id));}
+  renderKYCClients(filtered,docs);
+}
+
+function openKYCForm(clientId=null){
+  currentKYCClientId=clientId;kycQueue=[];
+  document.getElementById('kyc-list-panel').style.display='none';
+  document.getElementById('kyc-form-panel').style.display='block';
+  document.getElementById('kyc-queue-list').innerHTML='';
+  document.getElementById('kyc-upload-progress').style.display='none';
+  document.getElementById('kyc-uploaded-docs-card').style.display='none';
+  const sel=document.getElementById('kyc-uploader');if(sel)sel.innerHTML=EMPLOYEES.map(e=>`<option ${e===currentUser.name?'selected':''}>${e}</option>`).join('');
+  if(clientId){document.getElementById('kyc-form-title').textContent='Edit Client KYC';loadKYCClientDetail(clientId);}
+  else{document.getElementById('kyc-form-title').textContent='Add New Client KYC';['kyc-name','kyc-mobile','kyc-email','kyc-dob','kyc-occupation','kyc-address','kyc-city','kyc-state','kyc-pan','kyc-aadhaar','kyc-passport','kyc-dl','kyc-voter','kyc-gstin'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});}
+}
+
+function closeKYCForm(){document.getElementById('kyc-form-panel').style.display='none';document.getElementById('kyc-list-panel').style.display='block';kycQueue=[];currentKYCClientId=null;loadKYCVault();}
+
+async function loadKYCClientDetail(clientId){
+  try{const {data}=await DB.from('kyc_clients').select('*').eq('id',clientId).single();if(data){const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};sv('kyc-name',data.full_name);sv('kyc-mobile',data.mobile);sv('kyc-email',data.email);sv('kyc-dob',data.dob);sv('kyc-occupation',data.occupation);sv('kyc-address',data.address);sv('kyc-city',data.city);sv('kyc-state',data.state);sv('kyc-pan',data.pan_number);sv('kyc-aadhaar',data.aadhaar_number);sv('kyc-passport',data.passport_number);sv('kyc-dl',data.dl_number);sv('kyc-voter',data.voter_id);sv('kyc-gstin',data.gstin);}
+  const {data:docs}=await DB.from('documents').select('*').eq('kyc_client_id',clientId).order('created_at',{ascending:false});
+  if(docs&&docs.length){document.getElementById('kyc-uploaded-docs-card').style.display='block';document.getElementById('kyc-uploaded-docs-list').innerHTML=docs.map(d=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--ivory3);border-radius:8px;border:1px solid var(--border2)"><i class="ti ti-file-certificate" style="color:var(--gold);font-size:18px;flex-shrink:0"></i><div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500">${d.doc_type}</div><div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.file_name||'—'}</div></div><div style="display:flex;gap:6px;flex-shrink:0">${d.file_url?`<a href="${d.file_url}" target="_blank" style="padding:4px 8px;background:var(--ivory2);border:1px solid var(--border2);border-radius:6px;font-size:11px;color:var(--text2);text-decoration:none"><i class="ti ti-eye" style="font-size:11px"></i> View</a><a href="${d.file_url}" download style="padding:4px 8px;background:var(--gold-light);border:1px solid var(--gold-border);border-radius:6px;font-size:11px;color:var(--gold);text-decoration:none"><i class="ti ti-download" style="font-size:11px"></i></a>`:'<span style="font-size:10px;color:var(--text4)">Saved</span>'}</div></div>`).join('');}}catch(e){console.log('KYC detail error:',e);}
+}
+
+function handleKYCDrop(e){e.preventDefault();const zone=document.getElementById('kyc-upload-zone');if(zone){zone.style.borderColor='';zone.style.background='';}handleKYCBulkFiles(e.dataTransfer.files);}
+function handleKYCBulkFiles(files){if(!files||!files.length)return;Array.from(files).forEach(file=>{const n=file.name.toLowerCase();let t='Other';if(n.includes('pan'))t='PAN Card';else if(n.includes('aadh'))t='Aadhaar Card';else if(n.includes('passport'))t='Passport';else if(n.includes('driv')||n.includes('dl'))t='Driving License';else if(n.includes('cheque')||n.includes('bank'))t='Cancelled Cheque';else if(n.includes('medical')||n.includes('health'))t='Medical Report';else if(n.includes('income')||n.includes('salary'))t='Income Proof';else if(n.includes('address'))t='Address Proof';addToKYCQueue(file,t);});}
+function handleKYCSingleFile(input,docType){if(!input.files||!input.files.length)return;addToKYCQueue(input.files[0],docType);input.value='';}
+function addToKYCQueue(file,docType){const id=Date.now()+'_'+Math.random().toString(36).substr(2,5);kycQueue.push({id,file,docType});renderKYCQueue();}
+function removeFromQueue(qid){kycQueue=kycQueue.filter(q=>q.id!==qid);renderKYCQueue();}
+function updateQueueDocType(qid,docType){const q=kycQueue.find(q=>q.id===qid);if(q)q.docType=docType;}
+function renderKYCQueue(){
+  const el=document.getElementById('kyc-queue-list');if(!el)return;
+  if(!kycQueue.length){el.innerHTML='';return;}
+  el.innerHTML=`<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">${kycQueue.length} file${kycQueue.length!==1?'s':''} ready:</div>`+kycQueue.map(q=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;margin-bottom:6px"><i class="ti ti-file" style="color:var(--gold);font-size:15px;flex-shrink:0"></i><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.file.name}</div><select onchange="updateQueueDocType('${q.id}',this.value)" style="font-size:11px;background:var(--ivory2);border:1px solid var(--border2);border-radius:5px;padding:2px 6px;color:var(--text2);outline:none;font-family:'DM Sans',sans-serif;margin-top:3px">${['PAN Card','Aadhaar Card','Passport','Driving License','Cancelled Cheque','Medical Report','Income Proof','Address Proof','Photograph','Policy Document','Other'].map(t=>`<option ${q.docType===t?'selected':''}>${t}</option>`).join('')}</select></div><button onclick="removeFromQueue('${q.id}')" style="background:none;border:none;cursor:pointer;color:var(--text4);padding:4px"><i class="ti ti-x" style="font-size:14px"></i></button></div>`).join('');
+}
+
+async function saveKYCClient(){
+  const name=v('kyc-name').trim();const mobile=v('kyc-mobile').trim();
+  if(!name){showToast('Please enter client full name','error');return;}
+  const btn=document.getElementById('kyc-save-btn');btn.innerHTML='<i class="spin ti ti-loader"></i> Saving...';btn.disabled=true;
+  try{
+    const clientData={full_name:name,mobile,email:v('kyc-email').trim(),dob:v('kyc-dob')||null,occupation:v('kyc-occupation').trim(),address:v('kyc-address').trim(),city:v('kyc-city').trim(),state:v('kyc-state').trim(),pan_number:v('kyc-pan').trim().toUpperCase(),aadhaar_number:v('kyc-aadhaar').trim(),passport_number:v('kyc-passport').trim().toUpperCase(),dl_number:v('kyc-dl').trim(),voter_id:v('kyc-voter').trim(),gstin:v('kyc-gstin').trim(),uploaded_by:currentUser.name,updated_at:new Date().toISOString()};
+    let clientId=currentKYCClientId;
+    if(clientId){await DB.from('kyc_clients').update(clientData).eq('id',clientId);}
+    else{clientData.created_at=new Date().toISOString();const {data,error}=await DB.from('kyc_clients').insert(clientData).select().single();if(error)throw new Error(error.message);clientId=data.id;currentKYCClientId=clientId;}
+    if(kycQueue.length){
+      const prog=document.getElementById('kyc-upload-progress');const bar=document.getElementById('kyc-progress-bar');const txt=document.getElementById('kyc-progress-text');
+      if(prog)prog.style.display='block';
+      for(let i=0;i<kycQueue.length;i++){
+        const q=kycQueue[i];if(bar)bar.style.width=Math.round(i/kycQueue.length*100)+'%';if(txt)txt.textContent=`Uploading ${i+1}/${kycQueue.length}: ${q.file.name}`;
+        const fname=`kyc/${clientId}/${Date.now()}_${q.file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;let fileUrl='';
+        try{const {data:sd}=await DB.storage.from('kyc-documents').upload(fname,q.file,{upsert:true});if(sd){const {data:ud}=DB.storage.from('kyc-documents').getPublicUrl(fname);fileUrl=ud?.publicUrl||'';}}catch(se){console.log('Storage error:',se);}
+        await DB.from('documents').insert({kyc_client_id:clientId,client_name:name,doc_type:q.docType,file_name:q.file.name,file_path:fname,file_url:fileUrl,file_size:q.file.size,mime_type:q.file.type,status:'Uploaded',uploaded_by_name:v('kyc-uploader')||currentUser.name,created_at:new Date().toISOString()});
+      }
+      if(bar)bar.style.width='100%';if(txt)txt.innerHTML=`<span style="color:var(--green)">✓ All ${kycQueue.length} files uploaded!</span>`;
+      kycQueue=[];renderKYCQueue();
+    }
+    await logAudit('CREATE','KYC Vault',`KYC saved for ${name}`);
+    btn.innerHTML='<i class="ti ti-check"></i> Saved!';btn.style.background='var(--green)';
+    setTimeout(()=>{btn.innerHTML='<i class="ti ti-check"></i> Save Client & Upload All';btn.style.background='';btn.disabled=false;},2000);btn.disabled=false;
+    await loadKYCClientDetail(clientId);
+  }catch(e){showToast('Save error: '+e.message,'error');btn.innerHTML='<i class="ti ti-check"></i> Save Client & Upload All';btn.disabled=false;}
+}
+
+/* ══ FOLLOW-UPS ══ */
+async function loadFollowups(){
+  const today=new Date().toISOString().split('T')[0];
+  const tomorrow=new Date(Date.now()+86400000).toISOString().split('T')[0];
+  const selectedEmp=v('fu-filter-emp');
+  const dateEl=document.getElementById('followup-date-label');if(dateEl)dateEl.textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  let leads=allLeads;if(!leads.length&&DB){const {data}=await DB.from('leads').select('*');if(data)leads=data;allLeads=leads;}
+  if(selectedEmp)leads=leads.filter(l=>l.assigned_name===selectedEmp);
+  if(currentRole!=='admin')leads=leads.filter(l=>l.assigned_name===currentUser.name);
+  const overdue=leads.filter(l=>l.follow_up_date&&l.follow_up_date<today&&!['Policy Issued','Closed Won','Closed Lost'].includes(l.stage));
+  const dueToday=leads.filter(l=>l.follow_up_date===today);
+  const dueTomorrow=leads.filter(l=>l.follow_up_date===tomorrow);
+  setEl('fu-overdue',overdue.length);setEl('fu-today',dueToday.length);setEl('fu-tomorrow',dueTomorrow.length);
+  const mkRow=(l,extra='')=>`<tr onclick="openLeadDetail(${l.id})" style="cursor:pointer"><td>${l.full_name||'—'}</td><td style="font-family:'DM Mono',monospace;font-size:12px">${l.mobile||'—'}</td><td>${l.product||'—'}</td>${extra}<td>${l.assigned_name||'—'}</td><td>${stageBadge(l.stage)}</td><td onclick="event.stopPropagation()"><button onclick="markFollowupDone(${l.id})" class="btn btn-outline" style="padding:4px 10px;font-size:11px"><i class="ti ti-check"></i> Done</button></td></tr>`;
+  const ob=document.getElementById('fu-overdue-tbody');if(ob)ob.innerHTML=overdue.length?overdue.map(l=>mkRow(l,`<td style="color:var(--red);font-weight:500">${formatDate(l.follow_up_date)}</td>`)).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text4)">No overdue follow-ups 🎉</td></tr>';
+  const tb=document.getElementById('fu-today-tbody');if(tb)tb.innerHTML=dueToday.length?dueToday.map(l=>`<tr onclick="openLeadDetail(${l.id})" style="cursor:pointer"><td>${l.full_name||'—'}</td><td style="font-family:'DM Mono',monospace;font-size:12px">${l.mobile||'—'}</td><td>${l.product||'—'}</td><td>${stageBadge(l.stage)}</td><td>${l.assigned_name||'—'}</td><td onclick="event.stopPropagation()"><button onclick="markFollowupDone(${l.id})" class="btn btn-outline" style="padding:4px 10px;font-size:11px"><i class="ti ti-check"></i> Done</button></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text4)">No follow-ups due today</td></tr>';
+  const tmb=document.getElementById('fu-tomorrow-tbody');if(tmb)tmb.innerHTML=dueTomorrow.length?dueTomorrow.map(l=>`<tr><td>${l.full_name||'—'}</td><td style="font-family:'DM Mono',monospace;font-size:12px">${l.mobile||'—'}</td><td>${l.product||'—'}</td><td>${stageBadge(l.stage)}</td><td>${l.assigned_name||'—'}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text4)">No follow-ups tomorrow</td></tr>';
+}
+
+async function markFollowupDone(id){if(!DB)return;const newDate=new Date(Date.now()+7*86400000).toISOString().split('T')[0];try{await DB.from('leads').update({follow_up_date:newDate,updated_at:new Date().toISOString()}).eq('id',id);await logAudit('UPDATE','Leads',`Follow-up done for lead #${id}, next: ${newDate}`);await loadLeads();await loadFollowups();}catch(e){}}
+
+/* ══ CALENDAR ══ */
+function changeCalMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function goToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
+async function renderCalendar(){
+  const label=document.getElementById('cal-month-label');if(label)label.textContent=new Date(calYear,calMonth,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const grid=document.getElementById('cal-grid');if(!grid)return;
+  const firstDay=new Date(calYear,calMonth,1).getDay();const daysInMonth=new Date(calYear,calMonth+1,0).getDate();const today=new Date().toISOString().split('T')[0];
+  let leads=allLeads;if(!leads.length&&DB){const {data}=await DB.from('leads').select('id,full_name,follow_up_date,assigned_name,stage');if(data)leads=data;}
+  if(currentRole!=='admin')leads=leads.filter(l=>l.assigned_name===currentUser.name);
+  let tasks=[];try{if(DB){let q=DB.from('tasks').select('id,title,due_date,assigned_name,status');if(currentRole!=='admin')q=q.eq('assigned_name',currentUser.name);const {data}=await q;if(data)tasks=data;}}catch(e){}
+  const cells=[];
+  for(let i=0;i<firstDay;i++)cells.push(`<div style="min-height:80px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;background:var(--ivory3)"></div>`);
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=dateStr===today;const isPast=dateStr<today;
+    const dayLeads=leads.filter(l=>l.follow_up_date===dateStr);const dayTasks=tasks.filter(t=>t.due_date===dateStr);
+    cells.push(`<div style="min-height:80px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;background:${isToday?'var(--gold-light)':'var(--ivory)'}"><div style="font-size:12px;font-weight:${isToday?'600':'400'};color:${isToday?'var(--gold)':isPast&&(dayLeads.length||dayTasks.length)?'var(--red)':'var(--text2)'};margin-bottom:4px">${d}</div>${dayLeads.slice(0,2).map(l=>`<div style="font-size:10px;background:${isPast?'#C0392B15':'var(--gold-light)'};color:${isPast?'var(--red)':'var(--gold)'};border-radius:3px;padding:1px 5px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid ${isPast?'#C0392B30':'var(--gold-border)'}">${l.full_name.split(' ')[0]}</div>`).join('')}${dayTasks.slice(0,1).map(t=>`<div style="font-size:10px;background:#1A4A8A15;color:var(--blue);border-radius:3px;padding:1px 5px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #1A4A8A25">📋 ${t.title.substring(0,12)}</div>`).join('')}${dayLeads.length>2?`<div style="font-size:9px;color:var(--text4)">+${dayLeads.length-2} more</div>`:''}</div>`);
+  }
+  grid.innerHTML=cells.join('');
+}
+
+/* ══ IMPORT ══ */
+let importRows=[];
+function handleImportDrop(e){e.preventDefault();const zone=document.getElementById('import-drop-zone');zone.style.borderColor='';zone.style.background='';if(e.dataTransfer.files[0])handleImportFile(e.dataTransfer.files[0]);}
+async function handleImportFile(file){
+  if(!file)return;const status=document.getElementById('import-status');status.textContent=`Reading ${file.name}...`;
+  try{
+    let rows=[];
+    if(file.name.endsWith('.csv')){
+      const text=await file.text();const lines=text.split('\n').filter(l=>l.trim());const headers=lines[0].split(',').map(h=>h.trim().replace(/"/g,'').toLowerCase());
+      rows=lines.slice(1).map(line=>{const vals=line.split(',').map(v2=>v2.trim().replace(/"/g,''));const obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return obj;}).filter(r=>r.full_name||r.name);
+    }else if(file.name.match(/\.xlsx?$/i)&&typeof XLSX!=='undefined'){
+      const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{defval:''});rows=json.map(r=>{const lc={};Object.keys(r).forEach(k=>lc[k.toLowerCase().replace(/ /g,'_')]=r[k]);return lc;});
+    }
+    importRows=rows.map(r=>({full_name:r.full_name||r.name||'',mobile:r.mobile||r.phone||'',email:r.email||'',product:r.product||'',stage:r.stage||'New Lead',assigned_name:r.assigned_name||r.assigned_to||'',city:r.city||'',state:r.state||'',pan_number:r.pan_number||r.pan||'',aadhaar_number:r.aadhaar_number||r.aadhaar||'',follow_up_date:r.follow_up_date||null,notes:r.notes||'',created_at:new Date().toISOString(),updated_at:new Date().toISOString()})).filter(r=>r.full_name);
+    status.innerHTML=`<span style="color:var(--green)">✓ Found ${importRows.length} valid rows</span>`;
+    renderImportPreview();
+  }catch(e){status.innerHTML=`<span style="color:var(--red)">✗ Error: ${e.message}</span>`;}
+}
+function renderImportPreview(){
+  const preview=document.getElementById('import-preview');const bar=document.getElementById('import-confirm-bar');const cnt=document.getElementById('import-row-count');
+  if(!preview)return;if(!importRows.length){preview.innerHTML='<div style="text-align:center;padding:20px;color:var(--text4)">No valid data found</div>';return;}
+  if(cnt)cnt.textContent=`${importRows.length} leads ready`;if(bar)bar.style.display='flex';
+  preview.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr>${['Name','Mobile','Product','Stage','Assigned To'].map(h=>`<th style="padding:6px 10px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border2)">${h}</th>`).join('')}</tr></thead><tbody>${importRows.slice(0,5).map(r=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;font-weight:500">${r.full_name}</td><td style="padding:7px 10px;color:var(--text3)">${r.mobile||'—'}</td><td style="padding:7px 10px">${r.product||'—'}</td><td style="padding:7px 10px">${stageBadge(r.stage)}</td><td style="padding:7px 10px">${r.assigned_name||'—'}</td></tr>`).join('')}</tbody></table>${importRows.length>5?`<div style="padding:8px 10px;font-size:11px;color:var(--text4);text-align:center">...and ${importRows.length-5} more rows</div>`:''}</div>`;
+}
+async function confirmImport(){
+  if(!importRows.length||!DB){showToast('No data or not connected. Please upload a file first.','error');return;}
+  const btn=document.getElementById('import-btn');btn.innerHTML='<i class="spin ti ti-loader"></i> Importing...';btn.disabled=true;
+  const logCard=document.getElementById('import-log-card');const logEl=document.getElementById('import-log');if(logCard)logCard.style.display='block';
+  let ok=0,fail=0;
+  for(let i=0;i<importRows.length;i+=10){
+    const batch=importRows.slice(i,i+10);
+    try{const {error}=await DB.from('leads').insert(batch);if(error){fail+=batch.length;if(logEl)logEl.innerHTML+=`<div style="color:var(--red);font-size:12px">✗ Rows ${i+1}-${i+batch.length}: ${error.message}</div>`;}else{ok+=batch.length;if(logEl)logEl.innerHTML+=`<div style="color:var(--green);font-size:12px">✓ Rows ${i+1}-${i+batch.length} imported</div>`;}}catch(e){fail+=batch.length;}
+  }
+  await logAudit('CREATE','Leads',`Bulk import: ${ok} imported, ${fail} failed`);
+  await loadLeads();btn.innerHTML=`<i class="ti ti-check"></i> Done! ${ok} imported`;btn.disabled=false;
+  if(logEl)logEl.innerHTML+=`<div style="font-weight:500;margin-top:8px;font-size:13px;color:var(--green)">✓ Complete: ${ok} added${fail?`, ${fail} failed`:''}</div>`;
+}
+function downloadTemplate(){const csv='full_name,mobile,email,product,stage,assigned_name,city,state,pan_number,follow_up_date,notes\nRajesh Mehta,+91 98765 43210,rajesh@email.com,Health,New Lead,Pranav Bhagat,Mumbai,Maharashtra,ABCDE1234F,2026-06-15,Interested in family floater\nPriya Sharma,+91 87654 32109,priya@email.com,Motor,Contacted,Rupali Jadav,Pune,Maharashtra,,2026-06-20,Car insurance renewal\n';const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='leads_import_template.csv';a.click();URL.revokeObjectURL(url);}
+
+/* ══ ANALYTICS ══ */
+async function initAnalyticsCharts(){
+  // Load real data for analytics
+  let leads=allLeads;
+  if(!leads.length&&DB){const {data}=await DB.from('leads').select('*');if(data){leads=data;allLeads=leads;}}
+  let tickets=[];try{if(DB){const {data}=await DB.from('tickets').select('id,status');if(data)tickets=data;}}catch(e){}
+
+  const policies=leads.filter(l=>['Policy Issued','Closed Won'].includes(l.stage)).length;
+  const conv=leads.length?Math.round(policies/leads.length*100):0;
+  setEl('a-conv',conv+'%');setEl('a-leads',leads.length);setEl('a-policies',policies);setEl('a-tickets',tickets.filter(t=>['Open','In Progress','Waiting'].includes(t.status)).length);
+
+  // Stage distribution chart
+  const ctx=document.getElementById('analytics-chart');
+  if(ctx&&!analyticsChart){
+    const stageCounts=STAGES.map(s=>leads.filter(l=>l.stage===s).length);
+    analyticsChart=new Chart(ctx,{type:'bar',data:{labels:STAGES,datasets:[{label:'Leads',data:stageCounts,backgroundColor:'rgba(184,150,12,0.2)',borderColor:'#B8960C',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9A9A9A',font:{size:10}},grid:{color:'rgba(184,150,12,0.06)'}},y:{ticks:{color:'#9A9A9A',font:{size:11}},grid:{color:'rgba(184,150,12,0.06)'}}}}});
+  }else if(analyticsChart){const stageCounts=STAGES.map(s=>leads.filter(l=>l.stage===s).length);analyticsChart.data.datasets[0].data=stageCounts;analyticsChart.update();}
+
+  // Product mix - updated to actual insurance products
+  const ctx2=document.getElementById('product-chart');
+  const prods=['Health','Personal Accidental','Motor','Fire','Marine','Burglary','CAR','EAR'];
+  if(ctx2&&!productChart){
+    productChart=new Chart(ctx2,{type:'doughnut',data:{labels:prods,datasets:[{data:prods.map(p=>leads.filter(l=>l.product===p).length||1),backgroundColor:['rgba(184,150,12,0.3)','rgba(26,74,138,0.3)','rgba(26,122,74,0.3)','rgba(90,45,130,0.3)','rgba(184,115,10,0.3)','rgba(192,57,43,0.3)','rgba(15,110,86,0.3)','rgba(60,52,137,0.3)'],borderColor:['#B8960C','#1A4A8A','#1A7A4A','#5A2D82','#B8730A','#C0392B','#0F6E56','#3C3489'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6B6B6B',font:{size:11,family:'DM Sans'},boxWidth:12}}}}});
+  }else if(productChart){productChart.data.datasets[0].data=prods.map(p=>leads.filter(l=>l.product===p).length||1);productChart.update();}
+
+  // Employee productivity
+  const prodEl=document.getElementById('emp-productivity');
+  if(prodEl){
+    const empLeads=EMPLOYEES.map(e=>({name:e,total:leads.filter(l=>l.assigned_name===e).length,converted:leads.filter(l=>l.assigned_name===e&&['Policy Issued','Closed Won'].includes(l.stage)).length}));
+    prodEl.innerHTML=empLeads.map((e,i)=>`<div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="width:28px;height:28px;border-radius:7px;background:${COLORS[i]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${e.name.split(' ').map(w=>w[0]).join('').substring(0,2)}</div><span style="min-width:140px;font-size:13px;font-weight:500">${e.name}</span><div style="flex:1"><div class="prog"><div class="prog-fill" style="width:${e.total?Math.round(e.converted/Math.max(e.total,1)*100):0}%"></div></div></div><span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--gold);min-width:36px;text-align:right">${e.total}</span><span style="font-size:12px;color:var(--text3);min-width:100px">${e.converted} converted</span></div>`).join('');
+  }
+}
+
+/* ══ AUDIT ══ */
+async function loadAudit(){
+  const tbody=document.getElementById('audit-tbody');if(!tbody)return;
+  let logs=[];try{if(DB&&currentRole==='admin'){const {data}=await DB.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);if(data)logs=data;}}catch(e){}
+  if(!logs.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text4)">No activity yet</td></tr>';return;}
+  tbody.innerHTML=logs.map(a=>`<tr><td style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text3)">${new Date(a.created_at).toLocaleString('en-IN')}</td><td>${a.user_name||'—'}</td><td>${actionBadge(a.action)}</td><td><span class="badge b-gold">${a.module}</span></td><td style="color:var(--text2)">${a.details||'—'}</td></tr>`).join('');
+}
+
+/* ══ EMPLOYEES ══ */
+async function loadEmployees(){
+  const tbody=document.getElementById('emp-tbody');if(!tbody)return;
+  setEl('emp-count',`${EMPLOYEES.length} employees · ${EMPLOYEES.length} active`);
+  let leads=allLeads;if(!leads.length&&DB){const {data}=await DB.from('leads').select('id,assigned_name,stage');if(data)leads=data;}
+  tbody.innerHTML=EMPLOYEES.map((name,i)=>{
+    const total=leads.filter(l=>l.assigned_name===name).length;
+    const conv=leads.filter(l=>l.assigned_name===name&&['Policy Issued','Closed Won'].includes(l.stage)).length;
+    const initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `<tr><td><div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:7px;background:${COLORS[i]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${initials}</div>${name}</div></td><td style="color:var(--text3)">Advisor</td><td>${total}</td><td style="color:var(--green);font-weight:600">${conv}</td><td>${total?`<div style="display:flex;align-items:center;gap:8px">${Math.round(conv/total*100)}%<div class="prog" style="width:60px"><div class="prog-fill" style="width:${Math.round(conv/total*100)}%"></div></div></div>`:'—'}</td><td><span class="badge b-green">Active</span></td></tr>`;
+  }).join('');
+}
+
+/* ══ DASHBOARD CHARTS ══ */
+function initDashCharts(){
+  const ctx=document.getElementById('conv-chart');
+  if(ctx&&!convChart){convChart=new Chart(ctx,{type:'line',data:{labels:['Jan','Feb','Mar','Apr','May','Jun'],datasets:[{label:'Leads In',data:[0,0,0,0,0,allLeads.length],borderColor:'#B8960C',backgroundColor:'rgba(184,150,12,0.08)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#B8960C',pointBorderColor:'#FFFFF0',pointBorderWidth:2},{label:'Converted',data:[0,0,0,0,0,allLeads.filter(l=>['Policy Issued','Closed Won'].includes(l.stage)).length],borderColor:'#1A7A4A',backgroundColor:'transparent',tension:0.4,fill:false,pointRadius:4,pointBackgroundColor:'#1A7A4A',pointBorderColor:'#FFFFF0',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6B6B6B',font:{size:11,family:'DM Sans'}}}},scales:{x:{ticks:{color:'#9A9A9A',font:{size:11}},grid:{color:'rgba(184,150,12,0.08)'}},y:{ticks:{color:'#9A9A9A',font:{size:11}},grid:{color:'rgba(184,150,12,0.08)'}}}}});}
+  const ctx2=document.getElementById('stage-chart');
+  if(ctx2&&!stageChart){const stageCounts=STAGES.slice(0,6).map(s=>allLeads.filter(l=>l.stage===s).length);stageChart=new Chart(ctx2,{type:'doughnut',data:{labels:STAGES.slice(0,6),datasets:[{data:stageCounts.every(c=>c===0)?[1,1,1,1,1,1]:stageCounts,backgroundColor:['#B8960C20','#1A4A8A20','#5A2D8220','#B8730A20','#1A7A4A20','#1A7A4A40'],borderColor:['#B8960C','#1A4A8A','#5A2D82','#B8730A','#1A7A4A','#1A7A4A'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6B6B6B',font:{size:10},boxWidth:10}}}}});}
+}
+
+/* ══ DRAWER ══ */
+function openDrawer(type,data={}){
+  drawerType=type;
+  drawerLeadId=(type==='lead-detail'&&data.id)?data.id:null;
+  const overlay=document.getElementById('overlay');
+  const body=document.getElementById('drawer-body');
+  const title=document.getElementById('drawer-title');
+  const sub=document.getElementById('drawer-sub');
+  if(!overlay||!body||!title||!sub){console.error('Drawer elements not found');return;}
+  if(type==='lead'||type==='lead-detail'){title.textContent=type==='lead-detail'?`Edit Lead — ${data.full_name||'Client'}`:'Add New Lead';sub.textContent=type==='lead-detail'?`ID: ${data.id} · Last updated: ${formatDate(data.updated_at)}`:'Fields marked * are required';body.innerHTML=leadFormHTML(data);}
+  else if(type==='task'){title.textContent='Add New Task';sub.textContent='Create a task and assign it';body.innerHTML=taskFormHTML();}
+  else if(type==='ticket'){title.textContent='New Ticket';sub.textContent='Internal workflow communication';body.innerHTML=ticketFormHTML();}
+  overlay.classList.add('open');
+}
+
+function closeDrawer(e){if(!e||e.target===document.getElementById('overlay'))document.getElementById('overlay').classList.remove('open');}
+
+// ── Toast notification system (replaces all alert() calls) ──
+function showToast(msg,type='info'){
+  const colors={success:{bg:'#1A7A4A',icon:'ti-circle-check'},error:{bg:'#C0392B',icon:'ti-alert-circle'},info:{bg:'var(--black2)',icon:'ti-info-circle'},warn:{bg:'#B8730A',icon:'ti-alert-triangle'}};
+  const c=colors[type]||colors.info;
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:${c.bg};color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;border:1px solid rgba(255,255,255,0.15);box-shadow:0 4px 24px rgba(0,0,0,0.35);display:flex;align-items:center;gap:10px;max-width:400px;opacity:0;transition:all 0.25s ease;pointer-events:none;font-family:'DM Sans',sans-serif`;
+  t.innerHTML=`<i class="ti ${c.icon}" style="font-size:16px;flex-shrink:0"></i><span>${msg}</span>`;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>{t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(10px)';setTimeout(()=>t.remove(),300);},type==='error'?5000:3000);
+}
+
+// Escape key closes drawer
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('overlay').classList.remove('open');});
+
+async function saveDrawer(){
+  if(!DB){showToast('Not connected to database. Please refresh.','error');return;}
+  const btn=document.getElementById('drawer-save-btn');
+  btn.innerHTML='<i class="spin ti ti-loader"></i> Saving...';btn.disabled=true;
+  try{
+    if(drawerType==='lead'||drawerType==='lead-detail'){
+      const payload={
+        full_name:v('f-name').trim(),mobile:v('f-mobile').trim(),email:v('f-email').trim(),
+        dob:v('f-dob')||null,address:v('f-address').trim(),city:v('f-city').trim(),
+        state:v('f-state'),pincode:v('f-pin').trim(),occupation:v('f-occupation').trim(),
+        annual_income:v('f-income').trim(),product:v('f-product'),premium:v('f-premium').trim(),
+        policy_due_date:v('f-policy-due')||null,existing_insurance:v('f-existing').trim(),
+        nominee:v('f-nominee').trim(),pan_number:v('f-pan').trim().toUpperCase(),
+        aadhaar_number:v('f-aadhaar').trim(),passport_number:v('f-passport').trim().toUpperCase(),
+        dl_number:v('f-dl').trim(),smoking_status:v('f-smoking'),alcohol_status:v('f-alcohol'),
+        diabetes:v('f-diabetes'),blood_pressure:v('f-bp'),medical_notes:v('f-medical').trim(),
+        stage:v('f-stage'),assigned_name:v('f-assign'),follow_up_date:v('f-followup')||null,
+        priority:v('f-priority')||'Normal',notes:v('f-notes').trim(),
+        updated_at:new Date().toISOString()
+      };
+      if(!payload.full_name){showToast('Please enter client name','error');btn.innerHTML='<i class="ti ti-check"></i> Save';btn.disabled=false;return;}
+      if(!payload.mobile){showToast('Please enter mobile number','error');btn.innerHTML='<i class="ti ti-check"></i> Save';btn.disabled=false;return;}
+
+      if(drawerLeadId){        // UPDATE existing lead
+        const {error}=await DB.from('leads').update(payload).eq('id',drawerLeadId);
+        if(error)throw new Error(error.message);
+        await logAudit('UPDATE','Leads',`Updated lead: ${payload.full_name} (${payload.product}) → Stage: ${payload.stage}`);
+        showToast(`✓ Lead updated: ${payload.full_name}`,'success');
+      }else{
+        // Feature 3: Duplicate detection before insert
+        const dups=await checkDuplicateLead(payload.mobile,payload.pan_number);
+        if(dups&&dups.length){
+          const names=dups.map(d=>`${d.full_name} (${d.stage})`).join(', ');
+          const proceed=confirm(`⚠️ Possible duplicate detected!\nExisting leads with same mobile/PAN: ${names}\n\nSave anyway?`);
+          if(!proceed){btn.innerHTML='<i class="ti ti-check"></i> Save';btn.disabled=false;return;}
+        }
+        // INSERT new lead
+        payload.created_at=new Date().toISOString();
+        const {data:ins,error}=await DB.from('leads').insert(payload).select().single();
+        if(error)throw new Error(error.message);
+        // Upload attachments
+        const attachInput=document.getElementById('f-attachments');
+        if(ins&&attachInput&&attachInput.files&&attachInput.files.length){
+          for(const file of Array.from(attachInput.files)){
+            try{
+              const fname=`lead_attachments/${ins.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+              const {data:sd}=await DB.storage.from('kyc-documents').upload(fname,file,{upsert:true});
+              if(sd){const {data:ud}=DB.storage.from('kyc-documents').getPublicUrl(fname);await DB.from('lead_attachments').insert({lead_id:ins.id,file_name:file.name,file_url:ud?.publicUrl||'',uploaded_by:currentUser.name,created_at:new Date().toISOString()});}
+            }catch(fe){console.log('Attachment upload error:',fe);}
+          }
+        }
+        await logAudit('CREATE','Leads',`New lead: ${payload.full_name} (${payload.product}) → ${payload.assigned_name}`);
+        showToast(`✓ Lead added: ${payload.full_name}`,'success');
+      }
+      await loadLeads();
+
+    }else if(drawerType==='task'){
+      const payload={title:v('f-name').trim(),assigned_name:v('f-assign'),priority:v('f-priority'),due_date:v('f-followup')||null,status:v('f-stage')||'Pending',description:v('f-notes').trim(),created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+      if(!payload.title){showToast('Please enter task title','error');btn.innerHTML='<i class="ti ti-check"></i> Save';btn.disabled=false;return;}
+      const {error}=await DB.from('tasks').insert(payload);
+      if(error)throw new Error(error.message);
+      await logAudit('CREATE','Tasks',`New task: "${payload.title}" → ${payload.assigned_name}`);
+      showToast(`✓ Task created: ${payload.title}`,'success');
+      await loadTasks();
+
+    }else if(drawerType==='ticket'){
+      const payload={subject:v('f-name').trim(),assigned_name:v('f-assign'),raised_name:currentUser.name,client_name:v('f-client-name').trim()||null,product:v('f-ticket-product')||null,priority:v('f-priority')||'Medium',due_date:v('f-followup')||null,status:'Open',description:v('f-notes').trim(),created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+      if(!payload.subject){showToast('Please enter ticket subject','error');btn.innerHTML='<i class="ti ti-check"></i> Save';btn.disabled=false;return;}
+      const {error}=await DB.from('tickets').insert(payload);
+      if(error)throw new Error(error.message);
+      await logAudit('CREATE','Tickets',`New ticket: "${payload.subject}" → ${payload.assigned_name}`);
+      showToast(`✓ Ticket raised: ${payload.subject}`,'success');
+      await loadTickets();
+    }
+    btn.innerHTML='<i class="ti ti-check"></i> Save';btn.disabled=false;
+    document.getElementById('overlay').classList.remove('open');
+  }catch(e){
+    showToast('Save error: '+e.message,'error');
+    btn.innerHTML='<i class="ti ti-check"></i> Save';btn.disabled=false;
+  }
+}
+
+/* ══ FORM HTML ══ */
+function leadFormHTML(d={}){
+  return `<div class="form-section"><div class="form-section-title"><i class="ti ti-user"></i> Basic Details</div><div class="form-grid">
+    <div class="fld"><label>Full Name *</label><input type="text" id="f-name" value="${d.full_name||''}" placeholder="e.g. Rajesh Mehta"></div>
+    <div class="fld"><label>Mobile *</label><input type="tel" id="f-mobile" value="${d.mobile||''}" placeholder="+91 98765 43210"></div>
+    <div class="fld"><label>Email</label><input type="email" id="f-email" value="${d.email||''}" placeholder="client@email.com"></div>
+    <div class="fld"><label>Date of Birth</label><input type="date" id="f-dob" value="${d.dob||''}"></div>
+    <div class="fld"><label>Occupation</label><input type="text" id="f-occupation" value="${d.occupation||''}" placeholder="Business Owner"></div>
+    <div class="fld"><label>Annual Income</label><input type="text" id="f-income" value="${d.annual_income||''}" placeholder="₹12,00,000"></div>
+    <div class="fld form-full"><label>Address</label><input type="text" id="f-address" value="${d.address||''}" placeholder="House / Street / Area"></div>
+    <div class="fld"><label>City</label><input type="text" id="f-city" value="${d.city||''}" placeholder="Mumbai"></div>
+    <div class="fld"><label>State</label><select id="f-state">${['','Maharashtra','Gujarat','Rajasthan','Delhi','Karnataka','Tamil Nadu','Uttar Pradesh','Telangana','West Bengal','Madhya Pradesh','Punjab','Haryana'].map(s=>`<option ${(d.state||'')===s?'selected':''}>${s}</option>`).join('')}</select></div>
+  </div></div>
+  <div class="form-section"><div class="form-section-title"><i class="ti ti-shield"></i> Insurance Details</div><div class="form-grid">
+    <div class="fld"><label>Product *</label><select id="f-product">${['Health','Personal Accidental','Motor','Fire','Marine','Burglary','CAR','EAR'].map(p=>`<option ${(d.product||'')===p?'selected':''}>${p}</option>`).join('')}</select></div>
+    <div class="fld"><label>Premium Size</label><input type="text" id="f-premium" value="${d.premium||''}" placeholder="₹25,000/yr"></div>
+    <div class="fld"><label>Policy Due Date</label><input type="date" id="f-policy-due" value="${d.policy_due_date||''}"></div>
+    <div class="fld"><label>Existing Insurance</label><input type="text" id="f-existing" value="${d.existing_insurance||''}" placeholder="Policy details if any"></div>
+    <div class="fld"><label>Nominee Name</label><input type="text" id="f-nominee" value="${d.nominee||''}" placeholder="Full name"></div>
+    <div class="fld form-full"><label>Attachments</label><div style="display:flex;flex-direction:column;gap:8px"><label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--ivory3);border:1.5px dashed var(--border3);border-radius:8px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor=''"><i class="ti ti-paperclip" style="color:var(--gold);font-size:16px"></i><span style="font-size:12.5px;color:var(--text2)">Click to attach files (PDF, JPG, PNG · 10MB each)</span><input type="file" id="f-attachments" style="display:none" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="previewLeadAttachments(this.files)"></label><div id="f-attach-preview" style="display:flex;flex-direction:column;gap:6px"></div></div></div>
+  </div></div>
+  <div class="form-section"><div class="form-section-title"><i class="ti ti-heart-rate-monitor"></i> Health Details</div><div class="form-grid">
+    <div class="fld"><label>Smoking</label><select id="f-smoking">${['Non-smoker','Smoker','Occasional'].map(o=>`<option ${(d.smoking_status||'Non-smoker')===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="fld"><label>Alcohol</label><select id="f-alcohol">${['Non-drinker','Occasional','Regular'].map(o=>`<option ${(d.alcohol_status||'Non-drinker')===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="fld"><label>Diabetes</label><select id="f-diabetes">${['No','Yes','Pre-diabetic'].map(o=>`<option ${(d.diabetes||'No')===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="fld"><label>Blood Pressure</label><select id="f-bp">${['Normal','High BP','Low BP'].map(o=>`<option ${(d.blood_pressure||'Normal')===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    <div class="fld form-full"><label>Medical Notes</label><textarea id="f-medical" placeholder="Any conditions...">${(d.medical_notes||'').replace(/</g,'&lt;')}</textarea></div>
+  </div></div>
+  <div class="form-section"><div class="form-section-title"><i class="ti ti-id-badge"></i> KYC Numbers</div><div class="form-grid">
+    <div class="fld"><label>PAN Number</label><input type="text" id="f-pan" value="${d.pan_number||''}" placeholder="ABCDE1234F"></div>
+    <div class="fld"><label>Aadhaar Number</label><input type="text" id="f-aadhaar" value="${d.aadhaar_number||''}" placeholder="XXXX XXXX XXXX"></div>
+    <div class="fld"><label>Passport</label><input type="text" id="f-passport" value="${d.passport_number||''}" placeholder="A1234567"></div>
+    <div class="fld"><label>Driving License</label><input type="text" id="f-dl" value="${d.dl_number||''}" placeholder="MH01 20240001234"></div>
+  </div></div>
+  <div class="form-section"><div class="form-section-title"><i class="ti ti-flag"></i> Assignment</div><div class="form-grid">
+    <div class="fld"><label>Assign To *</label><select id="f-assign">${EMPLOYEES.map(e=>`<option ${(d.assigned_name||currentUser.name)===e?'selected':''}>${e}</option>`).join('')}</select></div>
+    <div class="fld"><label>Lead Stage *</label><select id="f-stage">${STAGES.map(s=>`<option ${(d.stage||'New Lead')===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="fld"><label>Follow-up Date</label><input type="date" id="f-followup" value="${d.follow_up_date||''}"></div>
+    <div class="fld"><label>Priority</label><select id="f-priority"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+    <div class="fld form-full"><label>Notes</label><textarea id="f-notes" placeholder="First interaction notes, requirements...">${d.notes||''}</textarea></div>
+  </div></div>`;
+}
+
+function taskFormHTML(){return `<div class="form-section"><div class="form-section-title"><i class="ti ti-checklist"></i> Task Details</div><div class="form-grid">
+  <div class="fld form-full"><label>Task Title *</label><input type="text" id="f-name" placeholder="e.g. Follow up with client for documents"></div>
+  <div class="fld"><label>Assign To *</label><select id="f-assign">${EMPLOYEES.map(e=>`<option ${currentUser.name===e?'selected':''}>${e}</option>`).join('')}</select></div>
+  <div class="fld"><label>Priority</label><select id="f-priority"><option>Normal</option><option>High</option><option>Urgent</option><option>Low</option></select></div>
+  <div class="fld"><label>Due Date</label><input type="date" id="f-followup"></div>
+  <div class="fld"><label>Status</label><select id="f-stage"><option>Pending</option><option>In Progress</option></select></div>
+  <div class="fld"><label>Related Client</label><input type="text" id="f-lead" placeholder="Client name (optional)"></div>
+  <div class="fld form-full"><label>Description</label><textarea id="f-notes" placeholder="Task details..."></textarea></div>
+</div></div>`;}
+
+function ticketFormHTML(){return `<div class="form-section"><div class="form-section-title"><i class="ti ti-ticket"></i> Ticket Details</div>
+  <div class="tip-box"><i class="ti ti-info-circle"></i> Raised by: <strong>${currentUser.name}</strong> — Both you and assigned person will see this ticket and its chat</div>
+  <div class="form-grid">
+    <div class="fld form-full"><label>Subject *</label><input type="text" id="f-name" placeholder="e.g. KYC documents missing for Rajesh Mehta"></div>
+    <div class="fld"><label>Client Name</label><input type="text" id="f-client-name" placeholder="Client this ticket is about"></div>
+    <div class="fld"><label>Product</label><select id="f-ticket-product"><option value="">— Select Product —</option>${['Health','Personal Accidental','Motor','Fire','Marine','Burglary','CAR','EAR'].map(p=>`<option>${p}</option>`).join('')}</select></div>
+    <div class="fld"><label>Assign To *</label><select id="f-assign">${EMPLOYEES.map(e=>`<option>${e}</option>`).join('')}</select></div>
+    <div class="fld"><label>Priority</label><select id="f-priority"><option>Medium</option><option>High</option><option>Urgent</option><option>Low</option></select></div>
+    <div class="fld"><label>Due Date</label><input type="date" id="f-followup"></div>
+    <div class="fld form-full"><label>Description *</label><textarea id="f-notes" placeholder="Describe the issue clearly. All updates should happen inside this ticket chat."></textarea></div>
+  </div></div>`;}
+
+/* ══ NOTIFICATIONS ══ */
+function toggleNotif(){document.getElementById('notif-panel').classList.toggle('open');}
+document.addEventListener('click',function(e){const p=document.getElementById('notif-panel');if(p&&p.classList.contains('open')&&!e.target.closest('.icon-btn'))p.classList.remove('open');});
+
+function showNotifToast(msg){
+  const dot=document.getElementById('notif-dot');if(dot)dot.style.display='block';
+  const toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--black2);color:var(--ivory);padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;border:1px solid var(--gold-border);box-shadow:0 4px 20px rgba(0,0,0,0.3);display:flex;align-items:center;gap:10px;max-width:360px';
+  toast.innerHTML=`<i class="ti ti-bell" style="color:var(--gold);font-size:16px"></i><span>${msg}</span>`;document.body.appendChild(toast);setTimeout(()=>toast.remove(),4000);
+  const list=document.getElementById('notif-list');if(list){const item=document.createElement('div');item.className='notif-item';item.innerHTML=`<div class="notif-icon gold"><i class="ti ti-bell"></i></div><div><p style="font-size:12.5px;font-weight:500;color:var(--black2)">${msg}</p><span style="font-size:11px;color:var(--text4)">Just now</span></div>`;list.innerHTML='';list.appendChild(item);}
+}
+
+/* ══ REALTIME ══ */
+function initRealtime(){
+  if(!DB)return;
+  try{DB.channel('crm-rt').on('postgres_changes',{event:'INSERT',schema:'public',table:'tickets'},p=>{if(p.new.assigned_name===currentUser.name||p.new.raised_name===currentUser.name){showNotifToast(`New ticket: "${p.new.subject}"`);loadTickets();}}).on('postgres_changes',{event:'INSERT',schema:'public',table:'leads'},p=>{if(p.new.assigned_name===currentUser.name){showNotifToast(`New lead assigned: ${p.new.full_name}`);loadLeads();}}).on('postgres_changes',{event:'INSERT',schema:'public',table:'ticket_comments'},p=>{if(currentTicketId&&p.new.ticket_id===currentTicketId&&p.new.author_name!==currentUser.name)loadChatMessages();}).subscribe();}catch(e){console.log('Realtime error:',e);}
+}
+
+/* ══ INIT ══ */
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('auth-email').focus();
+});
+</script>
+</body>
+</html>
