@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { globalSearch } from '../../services/search/searchService';
+import NotificationBell from './NotificationBell';
 
 export default function Topbar({ title }) {
   const [query, setQuery] = useState('');
@@ -31,6 +32,9 @@ export default function Topbar({ title }) {
             ))}
           </div>
         ) : null}
+      </div>
+      <div className="topbar-right">
+        <NotificationBell />
       </div>
     </header>
   );
