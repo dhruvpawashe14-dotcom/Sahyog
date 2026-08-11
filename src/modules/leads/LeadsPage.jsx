@@ -5,6 +5,7 @@ import * as leadService from './services/leadService';
 import DataTable from '../../components/common/DataTable';
 import QuickContact from '../../components/common/QuickContact';
 import ListFilterBar from '../../components/common/ListFilterBar';
+import ScopeToggle from '../../components/common/ScopeToggle';
 
 export default function LeadsPage() {
   const { user, profile, isAdmin } = useAuth();
@@ -12,15 +13,17 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [stageFilter, setStageFilter] = useState('');
+  const [scope, setScope] = useState('all');
   const [view, setView] = useState('list'); // 'list' | 'pipeline'
   const [dragId, setDragId] = useState(null);
   const navigate = useNavigate();
 
-  const load = () => leadService.listLeads({ userId: user.id, isAdmin }).then(setLeads).finally(() => setLoading(false));
-  useEffect(() => { if (user) load(); }, [user, isAdmin]);
+  const load = () => leadService.listLeads().then(setLeads).finally(() => setLoading(false));
+  useEffect(() => { if (user) load(); }, [user]);
 
+  const scoped = scope === 'mine' ? leads.filter((l) => l.assigned_to === user?.id) : leads;
   const q = filter.trim().toLowerCase();
-  const filtered = leads.filter((l) => {
+  const filtered = scoped.filter((l) => {
     const matchesText = !q || (l.full_name || '').toLowerCase().includes(q) || (l.mobile || '').includes(q) || (l.product || '').toLowerCase().includes(q);
     const matchesStage = !stageFilter || l.stage === stageFilter;
     return matchesText && matchesStage;
@@ -61,7 +64,10 @@ export default function LeadsPage() {
 
       {view === 'list' && (
         <>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <ScopeToggle scope={scope} onChange={setScope}
+              mineCount={leads.filter((l) => l.assigned_to === user?.id).length}
+              allCount={leads.length} />
             <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by name, mobile, product..." />
             <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} style={{ marginBottom: 12 }}>
               <option value="">All stages</option>

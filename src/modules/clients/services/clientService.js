@@ -1,9 +1,7 @@
 import { supabase } from '../../../services/supabase/client';
 
-export async function listClients({ assignedTo, isAdmin } = {}) {
-  let q = supabase.from('clients').select('*').order('updated_at', { ascending: false });
-  if (!isAdmin && assignedTo) q = q.eq('assigned_to', assignedTo);
-  const { data, error } = await q;
+export async function listClients() {
+  const { data, error } = await supabase.from('clients').select('*').order('updated_at', { ascending: false });
   if (error) throw error;
   return data;
 }

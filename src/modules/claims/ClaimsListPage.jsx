@@ -6,6 +6,7 @@ import { parseExcelFile, exportToExcel } from '../../utils/excel';
 import { useToast } from '../../components/common/Toast';
 import DataTable from '../../components/common/DataTable';
 import ListFilterBar from '../../components/common/ListFilterBar';
+import ScopeToggle from '../../components/common/ScopeToggle';
 
 export default function ClaimsListPage() {
   const { user, isAdmin } = useAuth();
@@ -13,10 +14,11 @@ export default function ClaimsListPage() {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [scope, setScope] = useState('all');
   const fileRef = useRef(null);
   const navigate = useNavigate();
 
-  const load = () => listClaims({ userId: user.id, isAdmin }).then(setClaims).finally(() => setLoading(false));
+  const load = () => listClaims().then(setClaims).finally(() => setLoading(false));
   useEffect(() => { if (user) load(); }, [user, isAdmin]);
 
   const onImport = async (file) => {
@@ -39,12 +41,13 @@ export default function ClaimsListPage() {
     })), 'claims-export.xlsx');
   };
 
+  const scoped = scope === 'mine' ? claims.filter((c) => c.assigned_to === user?.id) : claims;
   const q = filter.trim().toLowerCase();
-  const filtered = q ? claims.filter((c) =>
+  const filtered = q ? scoped.filter((c) =>
     (c.client_name || '').toLowerCase().includes(q) ||
     (c.claim_ref || '').toLowerCase().includes(q) ||
     (c.policy_number || '').toLowerCase().includes(q)
-  ) : claims;
+  ) : scoped;
 
   const columns = [
     { key: 'claim_ref', label: 'Ref' },
@@ -77,7 +80,12 @@ export default function ClaimsListPage() {
           <button className="btn btn-gold" onClick={() => navigate('/claims/new')}><i className="ti ti-plus" /> New Claim</button>
         </div>
       </div>
-      <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by client, ref, policy number..." />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <ScopeToggle scope={scope} onChange={setScope}
+          mineCount={claims.filter((c) => c.assigned_to === user?.id).length}
+          allCount={claims.length} />
+        <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by client, ref, policy number..." />
+      </div>
       <div className="card" style={{ padding: 0 }}>
         <DataTable columns={columns} rows={filtered} loading={loading} emptyLabel="No claims yet" />
       </div>

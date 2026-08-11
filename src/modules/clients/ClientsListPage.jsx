@@ -5,26 +5,29 @@ import { listClients } from './services/clientService';
 import DataTable from '../../components/common/DataTable';
 import QuickContact from '../../components/common/QuickContact';
 import ListFilterBar from '../../components/common/ListFilterBar';
+import ScopeToggle from '../../components/common/ScopeToggle';
 
 export default function ClientsListPage() {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [scope, setScope] = useState('all');
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
-    listClients({ assignedTo: user.id, isAdmin }).then(setClients).finally(() => setLoading(false));
-  }, [user, isAdmin]);
+    listClients().then(setClients).finally(() => setLoading(false));
+  }, [user]);
 
+  const scoped = scope === 'mine' ? clients.filter((c) => c.assigned_to === user?.id) : clients;
   const q = filter.trim().toLowerCase();
-  const filtered = q ? clients.filter((c) =>
+  const filtered = q ? scoped.filter((c) =>
     (c.full_name || '').toLowerCase().includes(q) ||
     (c.mobile || '').includes(q) ||
     (c.pan_number || '').toLowerCase().includes(q) ||
     (c.email || '').toLowerCase().includes(q)
-  ) : clients;
+  ) : scoped;
 
   const columns = [
     { key: 'full_name', label: 'Name' },
@@ -45,7 +48,12 @@ export default function ClientsListPage() {
         <div><h1>Clients</h1><p>{filtered.length} of {clients.length} clients</p></div>
         <button className="btn btn-gold" onClick={() => navigate('/clients/new')}><i className="ti ti-plus" /> Add Client</button>
       </div>
-      <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by name, mobile, PAN, email..." />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <ScopeToggle scope={scope} onChange={setScope}
+          mineCount={clients.filter((c) => c.assigned_to === user?.id).length}
+          allCount={clients.length} />
+        <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by name, mobile, PAN, email..." />
+      </div>
       <div className="card" style={{ padding: 0 }}>
         <DataTable columns={columns} rows={filtered} loading={loading} emptyLabel="No clients yet" />
       </div>

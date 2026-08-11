@@ -6,10 +6,8 @@ export const STAGES = [
   'Closed Won', 'Closed Lost',
 ];
 
-export async function listLeads({ userId, isAdmin }) {
-  let q = supabase.from('leads').select('*').order('updated_at', { ascending: false });
-  if (!isAdmin) q = q.eq('assigned_to', userId);
-  const { data, error } = await q;
+export async function listLeads() {
+  const { data, error } = await supabase.from('leads').select('*').order('updated_at', { ascending: false });
   if (error) throw error;
   return data;
 }

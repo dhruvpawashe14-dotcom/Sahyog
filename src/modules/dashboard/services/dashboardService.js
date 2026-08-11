@@ -7,8 +7,6 @@ export async function fetchDashboardStats({ userId, isAdmin }) {
   const policiesQ = supabase.from('policies').select('id', { count: 'exact', head: true });
   const followupsQ = supabase.from('leads').select('id', { count: 'exact', head: true }).eq('follow_up_date', todayLocalStr());
 
-  if (!isAdmin) clientsQ.eq('assigned_to', userId);
-
   const [clients, tickets, policies, followups] = await Promise.all([clientsQ, ticketsQ, policiesQ, followupsQ]);
   return {
     totalClients: clients.count ?? 0,

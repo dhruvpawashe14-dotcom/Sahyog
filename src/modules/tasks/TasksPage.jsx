@@ -4,6 +4,7 @@ import { useToast } from '../../components/common/Toast';
 import * as taskService from './services/taskService';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
+import ScopeToggle from '../../components/common/ScopeToggle';
 import { useEmployees } from '../../hooks/useEmployees';
 
 const STATUSES = ['Pending', 'In Progress', 'Completed', 'Delayed'];
@@ -13,10 +14,11 @@ export default function TasksPage() {
   const { showToast } = useToast();
   const employees = useEmployees();
   const [tasks, setTasks] = useState([]);
+  const [scope, setScope] = useState('all');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', due_date: '', priority: 'Normal', assigned_to: '' });
 
-  const load = () => taskService.listTasks({ userId: user.id, isAdmin }).then(setTasks);
+  const load = () => taskService.listTasks().then(setTasks);
   useEffect(() => { if (user) load(); }, [user, isAdmin]);
   useEffect(() => { if (user && !form.assigned_to) setForm((f) => ({ ...f, assigned_to: user.id })); }, [user]);
 
@@ -29,6 +31,8 @@ export default function TasksPage() {
     showToast('Task added', 'success');
     load();
   };
+
+  const scoped = scope === 'mine' ? tasks.filter((t) => t.assigned_to === user?.id) : tasks;
 
   const columns = [
     { key: 'title', label: 'Title' },
@@ -47,11 +51,14 @@ export default function TasksPage() {
   return (
     <div>
       <div className="page-hdr">
-        <div><h1>Tasks</h1><p>{tasks.length} tasks</p></div>
+        <div><h1>Tasks</h1><p>{scoped.length} of {tasks.length} tasks</p></div>
         <button className="btn btn-gold" onClick={() => setOpen(true)}><i className="ti ti-plus" /> Add Task</button>
       </div>
+      <ScopeToggle scope={scope} onChange={setScope}
+        mineCount={tasks.filter((t) => t.assigned_to === user?.id).length}
+        allCount={tasks.length} />
       <div className="card" style={{ padding: 0 }}>
-        <DataTable columns={columns} rows={tasks} emptyLabel="No tasks yet" />
+        <DataTable columns={columns} rows={scoped} emptyLabel="No tasks yet" />
       </div>
 
       <Modal open={open} title="Add Task" onClose={() => setOpen(false)} footer={<button className="btn btn-gold" onClick={save}>Save</button>}>

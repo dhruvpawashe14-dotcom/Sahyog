@@ -2,10 +2,8 @@ import { supabase } from '../../../services/supabase/client';
 
 export const CLAIM_STATUSES = ['Filed', 'Under Review', 'Documents Pending', 'Approved', 'Rejected', 'Settled'];
 
-export async function listClaims({ userId, isAdmin }) {
-  let q = supabase.from('claims').select('*').order('created_at', { ascending: false });
-  if (!isAdmin) q = q.eq('assigned_to', userId);
-  const { data, error } = await q;
+export async function listClaims() {
+  const { data, error } = await supabase.from('claims').select('*').order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 }
