@@ -186,3 +186,25 @@ td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--ivory4)}
 .scope-toggle{display:inline-flex;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;padding:3px;gap:2px}
 .scope-toggle button{background:none;border:none;padding:6px 14px;border-radius:6px;font-size:12.5px;cursor:pointer;color:var(--text3);font-weight:500}
 .scope-toggle button.active{background:var(--ivory);color:var(--gold);box-shadow:0 1px 3px rgba(0,0,0,0.08);font-weight:600}
+
+.quick-actions-row{display:flex;gap:10px;flex-wrap:wrap}
+.quick-action-btn{display:flex;align-items:center;gap:8px;background:var(--ivory2);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all 0.15s}
+.quick-action-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-light)}
+.quick-action-btn i{color:var(--gold);font-size:16px}
+
+.stat-grid{grid-template-columns:repeat(6,1fr)}
+.stat-card:hover{border-color:var(--gold);box-shadow:0 2px 8px rgba(46,117,182,0.1)}
+
+.dashboard-panels{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.dashboard-panels.with-activity{grid-template-columns:repeat(4,1fr)}
+.activity-panel{grid-column:1/-1}
+
+@media (max-width: 1200px) {
+  .stat-grid{grid-template-columns:repeat(3,1fr)}
+  .dashboard-panels{grid-template-columns:1fr 1fr}
+}
+@media (max-width: 880px) {
+  .stat-grid{grid-template-columns:repeat(2,1fr) !important}
+  .dashboard-panels{grid-template-columns:1fr !important}
+  .quick-actions-row{overflow-x:auto;flex-wrap:nowrap}
+}

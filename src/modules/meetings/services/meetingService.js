@@ -1,8 +1,7 @@
 import { supabase } from '../../../services/supabase/client';
 
-export async function listMeetings({ userId, isAdmin, from, to }) {
+export async function listMeetings({ from, to } = {}) {
   let q = supabase.from('meetings').select('*').order('meeting_date', { ascending: true });
-  if (!isAdmin) q = q.eq('assigned_to', userId);
   if (from) q = q.gte('meeting_date', from);
   if (to) q = q.lte('meeting_date', to);
   const { data, error } = await q;
