@@ -18,7 +18,9 @@ export default function TicketDetailPage() {
   const [participants, setParticipants] = useState([]);
   const [body, setBody] = useState('');
   const [addingParticipant, setAddingParticipant] = useState('');
+  const [uploading, setUploading] = useState(false);
   const bottomRef = useRef(null);
+  const fileRef = useRef(null);
 
   const load = async () => {
     setTicket(await ticketService.getTicket(id));
@@ -34,6 +36,20 @@ export default function TicketDetailPage() {
     await ticketService.sendComment({ ticketId: id, authorId: user.id, authorName: profile.full_name, body });
     setBody('');
     load();
+  };
+
+  const sendFile = async (file) => {
+    setUploading(true);
+    try {
+      const url = await ticketService.uploadTicketAttachment(id, file);
+      await ticketService.sendComment({ ticketId: id, authorId: user.id, authorName: profile.full_name, body: file.name, isFile: true, fileUrl: url });
+      load();
+    } catch (e) {
+      showToast('Upload failed: ' + e.message, 'error');
+    } finally {
+      setUploading(false);
+      fileRef.current.value = '';
+    }
   };
 
   const changeStatus = async (status) => {
@@ -64,18 +80,36 @@ export default function TicketDetailPage() {
             {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
-        {ticket.description && <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 10 }}>{ticket.description}</p>}
+        {ticket.description && <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 6 }}>{ticket.description}</p>}
+        {ticket.ticket_type && (
+          <p style={{ fontSize: 11.5, color: 'var(--text4)', marginBottom: 10 }}>
+            {ticket.ticket_type}{ticket.ticket_subtype ? ` · ${ticket.ticket_subtype}` : ''}
+          </p>
+        )}
+        {ticket.status === 'Closed' && ticket.closed_by && (
+          <div style={{ fontSize: 11.5, color: 'var(--green)', marginBottom: 10 }}>
+            <i className="ti ti-check" /> Closed by {ticket.closed_by} on {new Date(ticket.closed_at).toLocaleString()}
+          </div>
+        )}
         <div className="chat-messages">
           {comments.length === 0 && <div className="table-empty">No messages yet — say hello to get started</div>}
           {comments.map((c) => (
             <div key={c.id} className={`chat-bubble ${c.author_name === profile.full_name ? 'mine' : ''}`}>
               <div className="chat-author">{c.author_name}</div>
-              <div>{c.body}</div>
+              {c.is_file ? (
+                <a href={c.file_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'inherit' }}>
+                  <i className="ti ti-paperclip" /> {c.body}
+                </a>
+              ) : <div>{c.body}</div>}
             </div>
           ))}
           <div ref={bottomRef} />
         </div>
         <div className="chat-input-row">
+          <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={(e) => e.target.files[0] && sendFile(e.target.files[0])} />
+          <button className="btn" onClick={() => fileRef.current.click()} disabled={uploading} title="Attach file">
+            <i className={uploading ? 'ti ti-loader spin' : 'ti ti-paperclip'} />
+          </button>
           <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Type message... (Ctrl+Enter to send)"
             onKeyDown={(e) => { if (e.ctrlKey && e.key === 'Enter') send(); }} />
           <button className="btn btn-gold" onClick={send}><i className="ti ti-send" /></button>
@@ -106,6 +140,9 @@ export default function TicketDetailPage() {
               <button className="btn" onClick={addParticipant}><i className="ti ti-plus" /></button>
             </div>
           )}
+          <p style={{ fontSize: 11, color: 'var(--text4)', marginTop: 10 }}>
+            Only people on this list (plus admins) can see this ticket and close it.
+          </p>
         </div>
       </div>
     </div>

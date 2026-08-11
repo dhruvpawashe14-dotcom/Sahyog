@@ -14,11 +14,30 @@ export function slaStatus(ticket) {
 }
 
 export async function listTickets({ userId, userName, isAdmin }) {
-  let q = supabase.from('tickets').select('*').order('created_at', { ascending: false });
-  if (!isAdmin) q = q.or(`assigned_to.eq.${userId},raised_by.eq.${userId}`);
-  const { data, error } = await q;
-  if (error) throw error;
-  return data;
+  if (isAdmin) {
+    const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  }
+  // Non-admins see tickets they raised, are assigned, OR were tagged as a participant on.
+  const [{ data: own, error: e1 }, { data: participantRows, error: e2 }] = await Promise.all([
+    supabase.from('tickets').select('*').or(`assigned_to.eq.${userId},raised_by.eq.${userId}`),
+    supabase.from('ticket_participants').select('ticket_id').eq('user_id', userId),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  const participantTicketIds = (participantRows ?? []).map((r) => r.ticket_id);
+  let tagged = [];
+  if (participantTicketIds.length) {
+    const { data, error } = await supabase.from('tickets').select('*').in('id', participantTicketIds);
+    if (error) throw error;
+    tagged = data ?? [];
+  }
+
+  const merged = [...(own ?? []), ...tagged];
+  const deduped = Array.from(new Map(merged.map((t) => [t.id, t])).values());
+  return deduped.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
 export async function getTicket(id) {
