@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
-import { getClient, listPolicies, createPolicy } from './services/clientService';
+import { getClient, listPolicies, createPolicy, updateClient } from './services/clientService';
 import Modal from '../../components/common/Modal';
 import { listClientDocuments, uploadDocument } from '../documents/services/documentService';
 import QuickContact from '../../components/common/QuickContact';
+import { useEmployees } from '../../hooks/useEmployees';
+import { logAudit } from '../../services/audit/auditService';
 
 const DOC_TYPES = ['PAN Card', 'Aadhaar Card', 'Passport', 'Driving License', 'Voter ID', 'GSTIN Certificate', 'Photo', 'Other'];
 
@@ -13,6 +15,7 @@ export default function ClientDetailPage() {
   const { id } = useParams();
   const { user, profile } = useAuth();
   const { showToast } = useToast();
+  const employees = useEmployees();
   const [client, setClient] = useState(null);
   const [policies, setPolicies] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -21,6 +24,8 @@ export default function ClientDetailPage() {
   const [docType, setDocType] = useState('Other');
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [policyForm, setPolicyForm] = useState({ policy_number: '', product: '', insurer: '', premium: '', sum_assured: '', start_date: '', renewal_date: '' });
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState(null);
   const fileRef = useRef(null);
 
   const load = () => {
@@ -29,6 +34,33 @@ export default function ClientDetailPage() {
     listClientDocuments(id).then(setDocuments);
   };
   useEffect(() => { load(); }, [id]);
+
+  const startEdit = () => {
+    setEditForm({
+      full_name: client.full_name || '', mobile: client.mobile || '', email: client.email || '',
+      pan_number: client.pan_number || '', aadhaar_number: client.aadhaar_number || '',
+      passport_number: client.passport_number || '', dl_number: client.dl_number || '',
+      voter_id: client.voter_id || '', gstin: client.gstin || '',
+      address: client.address || '', city: client.city || '', state: client.state || '', pincode: client.pincode || '',
+      client_category: client.client_category || '', assigned_to: client.assigned_to || '', rm_id: client.rm_id || '',
+    });
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    const re = employees.find((e) => e.id === editForm.assigned_to);
+    const rm = employees.find((e) => e.id === editForm.rm_id);
+    await updateClient(id, {
+      ...editForm,
+      pan_number: editForm.pan_number.toUpperCase(),
+      assigned_name: re?.full_name || client.assigned_name,
+      rm_name: rm?.full_name || null,
+    });
+    await logAudit({ userId: user.id, userName: profile.full_name, action: 'UPDATE', module: 'Clients', recordId: id, details: `Client details updated: ${editForm.full_name}` });
+    setEditing(false);
+    showToast('Client updated', 'success');
+    load();
+  };
 
   const onUpload = async (files) => {
     if (!files.length) return;
@@ -50,12 +82,10 @@ export default function ClientDetailPage() {
   const savePolicy = async () => {
     if (!policyForm.policy_number || !policyForm.product) { showToast('Policy number and product are required', 'error'); return; }
     await createPolicy({
-      ...policyForm,
-      client_id: id,
+      ...policyForm, client_id: id,
       premium: policyForm.premium ? Number(policyForm.premium) : null,
       sum_assured: policyForm.sum_assured ? Number(policyForm.sum_assured) : null,
-      start_date: policyForm.start_date || null,
-      renewal_date: policyForm.renewal_date || null,
+      start_date: policyForm.start_date || null, renewal_date: policyForm.renewal_date || null,
       created_by: user.id,
     });
     setPolicyModalOpen(false);
@@ -70,18 +100,24 @@ export default function ClientDetailPage() {
     <div>
       <div className="page-hdr">
         <div><h1>{client.full_name}</h1><p>{client.mobile} <QuickContact mobile={client.mobile} /> · {client.email || 'no email'}</p></div>
+        {tab === 'overview' && !editing && (
+          <button className="btn" onClick={startEdit}><i className="ti ti-edit" /> Edit</button>
+        )}
       </div>
 
       <div className="tabs">
         {['overview', 'policies', 'documents'].map((t) => (
-          <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
+          <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); setEditing(false); }}>
             {t[0].toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
 
-      {tab === 'overview' && (
+      {tab === 'overview' && !editing && (
         <div className="card form-grid" style={{ marginTop: 12 }}>
+          <Field label="Client Category" value={client.client_category} />
+          <Field label="RE" value={client.assigned_name} />
+          <Field label="RM" value={client.rm_name} />
           <Field label="PAN" value={client.pan_number} />
           <Field label="Aadhaar" value={client.aadhaar_number} />
           <Field label="Passport" value={client.passport_number} />
@@ -90,8 +126,50 @@ export default function ClientDetailPage() {
           <Field label="GSTIN" value={client.gstin} />
           <Field label="City" value={client.city} />
           <Field label="State" value={client.state} />
-          <Field label="Advisor" value={client.assigned_name} />
           <Field label="Address" value={client.address} full />
+        </div>
+      )}
+
+      {tab === 'overview' && editing && (
+        <div className="card" style={{ marginTop: 12 }}>
+          <div className="form-grid">
+            <div className="fld form-full"><label>Full Name</label><input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} /></div>
+            <div className="fld"><label>Mobile</label><input value={editForm.mobile} onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })} /></div>
+            <div className="fld"><label>Email</label><input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+            <div className="fld">
+              <label>Client Category</label>
+              <select value={editForm.client_category} onChange={(e) => setEditForm({ ...editForm, client_category: e.target.value })}>
+                <option value="">Select...</option><option>Retail</option><option>Corporate</option>
+              </select>
+            </div>
+            <div className="fld">
+              <label>RE (Relationship Executive)</label>
+              <select value={editForm.assigned_to} onChange={(e) => setEditForm({ ...editForm, assigned_to: e.target.value })}>
+                {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
+              </select>
+            </div>
+            <div className="fld">
+              <label>RM (Relationship Manager)</label>
+              <select value={editForm.rm_id} onChange={(e) => setEditForm({ ...editForm, rm_id: e.target.value })}>
+                <option value="">None</option>
+                {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
+              </select>
+            </div>
+            <div className="fld"><label>PAN</label><input value={editForm.pan_number} onChange={(e) => setEditForm({ ...editForm, pan_number: e.target.value })} style={{ textTransform: 'uppercase' }} /></div>
+            <div className="fld"><label>Aadhaar</label><input value={editForm.aadhaar_number} onChange={(e) => setEditForm({ ...editForm, aadhaar_number: e.target.value })} /></div>
+            <div className="fld"><label>Passport</label><input value={editForm.passport_number} onChange={(e) => setEditForm({ ...editForm, passport_number: e.target.value })} /></div>
+            <div className="fld"><label>Driving License</label><input value={editForm.dl_number} onChange={(e) => setEditForm({ ...editForm, dl_number: e.target.value })} /></div>
+            <div className="fld"><label>Voter ID</label><input value={editForm.voter_id} onChange={(e) => setEditForm({ ...editForm, voter_id: e.target.value })} /></div>
+            <div className="fld"><label>GSTIN</label><input value={editForm.gstin} onChange={(e) => setEditForm({ ...editForm, gstin: e.target.value })} /></div>
+            <div className="fld form-full"><label>Address</label><input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} /></div>
+            <div className="fld"><label>City</label><input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} /></div>
+            <div className="fld"><label>State</label><input value={editForm.state} onChange={(e) => setEditForm({ ...editForm, state: e.target.value })} /></div>
+            <div className="fld"><label>Pincode</label><input value={editForm.pincode} onChange={(e) => setEditForm({ ...editForm, pincode: e.target.value })} /></div>
+          </div>
+          <div className="modal-footer">
+            <button className="btn" onClick={() => setEditing(false)}>Cancel</button>
+            <button className="btn btn-gold" onClick={saveEdit}>Save Changes</button>
+          </div>
         </div>
       )}
 

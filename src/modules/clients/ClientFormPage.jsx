@@ -9,12 +9,12 @@ import IDFieldWithUpload from '../../components/forms/IDFieldWithUpload';
 import { useEmployees } from '../../hooks/useEmployees';
 
 const empty = {
-  full_name: '', mobile: '', email: '', dob: '', occupation: '',
+  full_name: '', mobile: '', email: '', dob: '',
   pan_number: '', aadhaar_number: '', passport_number: '', dl_number: '', voter_id: '', gstin: '',
-  address: '', city: '', state: '', pincode: '', assigned_to: '',
+  address: '', city: '', state: '', pincode: '',
+  client_category: '', assigned_to: '', rm_id: '',
 };
 
-// Maps each ID field to the doc_type label stored against the uploaded file.
 const ID_DOCS = [
   { key: 'pan_number', label: 'PAN', docType: 'PAN Card', uppercase: true },
   { key: 'aadhaar_number', label: 'Aadhaar', docType: 'Aadhaar Card' },
@@ -26,10 +26,10 @@ const ID_DOCS = [
 
 export default function ClientFormPage() {
   const [form, setForm] = useState(empty);
-  const [idFiles, setIdFiles] = useState({}); // { pan_number: File, aadhaar_number: File, ... }
-  const [otherFiles, setOtherFiles] = useState([]); // [{ file, docType }]
+  const [idFiles, setIdFiles] = useState({});
+  const [otherFiles, setOtherFiles] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
-  const [checking, setChecking] = useState(false);
+  const [dupChecked, setDupChecked] = useState(''); // fingerprint of what we last checked, to avoid re-checking on every keystroke
   const [saving, setSaving] = useState(false);
   const { user, profile } = useAuth();
   const { showToast } = useToast();
@@ -40,39 +40,46 @@ export default function ClientFormPage() {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  // Automatic duplicate detection — runs whenever mobile, email, PAN, Aadhaar or name settle
+  // (debounced), no manual button needed.
+  useEffect(() => {
+    const fingerprint = `${form.mobile}|${form.email}|${form.pan_number}|${form.aadhaar_number}|${form.full_name}`;
+    if (fingerprint === dupChecked) return;
+    if (!form.mobile && !form.pan_number && !form.aadhaar_number && !form.email) return;
+    const t = setTimeout(async () => {
+      const matches = await findDuplicateClients({ mobile: form.mobile, panNumber: form.pan_number, fullName: form.full_name });
+      setDuplicates(matches);
+      setDupChecked(fingerprint);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [form.mobile, form.email, form.pan_number, form.aadhaar_number, form.full_name]);
+
   const addOtherFiles = (fileList) => {
     const newOnes = Array.from(fileList).map((file) => ({ file, docType: 'Other' }));
     setOtherFiles((prev) => [...prev, ...newOnes]);
   };
   const removeOtherFile = (idx) => setOtherFiles((prev) => prev.filter((_, i) => i !== idx));
 
-  const checkDuplicates = async () => {
-    setChecking(true);
-    try {
-      const matches = await findDuplicateClients({ mobile: form.mobile, panNumber: form.pan_number, fullName: form.full_name });
-      setDuplicates(matches);
-    } finally {
-      setChecking(false);
-    }
-  };
-
   const totalFileCount = Object.keys(idFiles).length + otherFiles.length;
 
-  const save = async (force = false) => {
+  const save = async () => {
     if (!form.full_name || !form.mobile) { showToast('Name and mobile are required', 'error'); return; }
-    if (!force) {
-      const matches = await findDuplicateClients({ mobile: form.mobile, panNumber: form.pan_number, fullName: form.full_name });
-      if (matches.length) { setDuplicates(matches); return; }
-    }
+    if (!form.pan_number.trim()) { showToast('PAN number is required', 'error'); return; }
+    if (!form.aadhaar_number.trim()) { showToast('Aadhaar number is required', 'error'); return; }
     setSaving(true);
     try {
+      const re = employees.find((e) => e.id === form.assigned_to) || profile;
+      const rm = employees.find((e) => e.id === form.rm_id);
       const client = await createClient({
         ...form,
         dob: form.dob || null,
-        pan_number: form.pan_number?.toUpperCase() || null,
+        pan_number: form.pan_number.toUpperCase(),
         passport_number: form.passport_number?.toUpperCase() || null,
+        client_category: form.client_category || null,
         assigned_to: form.assigned_to || user.id,
-        assigned_name: (employees.find((e) => e.id === form.assigned_to) || profile).full_name,
+        assigned_name: re.full_name,
+        rm_id: form.rm_id || null,
+        rm_name: rm?.full_name || null,
         created_by: user.id,
       });
       await logAudit({ userId: user.id, userName: profile.full_name, action: 'CREATE', module: 'Clients', recordId: client.id, details: `Client created: ${client.full_name}` });
@@ -108,23 +115,37 @@ export default function ClientFormPage() {
           <div className="fld"><label>Mobile *</label><input value={form.mobile} onChange={set('mobile')} /></div>
           <div className="fld"><label>Email</label><input value={form.email} onChange={set('email')} /></div>
           <div className="fld"><label>Date of Birth</label><input type="date" value={form.dob} onChange={set('dob')} /></div>
-          <div className="fld"><label>Occupation</label><input value={form.occupation} onChange={set('occupation')} /></div>
           <div className="fld">
-            <label>Advisor</label>
+            <label>Client Category</label>
+            <select value={form.client_category} onChange={set('client_category')}>
+              <option value="">Select...</option>
+              <option>Retail</option>
+              <option>Corporate</option>
+            </select>
+          </div>
+          <div className="fld">
+            <label>RE (Relationship Executive)</label>
             <select value={form.assigned_to} onChange={set('assigned_to')}>
               {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}{emp.id === user.id ? ' (You)' : ''}</option>)}
+            </select>
+          </div>
+          <div className="fld">
+            <label>RM (Relationship Manager)</label>
+            <select value={form.rm_id} onChange={set('rm_id')}>
+              <option value="">None</option>
+              {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
             </select>
           </div>
         </div>
       </div>
 
       <div className="card" style={{ marginTop: 14 }}>
-        <div className="card-title">Identity Documents <span className="dim">— attach a copy right next to each ID</span></div>
+        <div className="card-title">Identity Documents <span className="dim">— PAN & Aadhaar numbers required, files optional</span></div>
         <div className="form-grid">
           {ID_DOCS.map((doc) => (
             <IDFieldWithUpload
               key={doc.key}
-              label={doc.label}
+              label={doc.key === 'pan_number' || doc.key === 'aadhaar_number' ? `${doc.label} *` : doc.label}
               value={form[doc.key]}
               onChange={set(doc.key)}
               uppercase={doc.uppercase}
@@ -167,22 +188,22 @@ export default function ClientFormPage() {
 
       {duplicates.length > 0 && (
         <div className="card duplicate-warning">
-          <div className="card-title"><i className="ti ti-alert-triangle" /> Possible duplicate client{duplicates.length > 1 ? 's' : ''} found</div>
+          <div className="card-title"><i className="ti ti-alert-triangle" /> This client may already exist</div>
           {duplicates.map((d) => (
             <div key={d.id} className="dup-row">
               {d.full_name} — {d.mobile} {d.pan_number ? `· ${d.pan_number}` : ''} <span className="dim">({d.matchType} match)</span>
             </div>
           ))}
+          <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 8 }}>You can still save — this is just a heads-up.</p>
           <div className="modal-footer">
-            <button className="btn" onClick={() => navigate(`/clients/${duplicates[0].id}`)}>View existing client</button>
-            <button className="btn btn-gold" onClick={() => save(true)}>Save anyway (new client)</button>
+            <button className="btn" onClick={() => navigate(`/clients/${duplicates[0].id}`)}>View existing client instead</button>
           </div>
         </div>
       )}
 
       <div className="page-hdr" style={{ marginTop: 16 }}>
-        <button className="btn" onClick={checkDuplicates} disabled={checking}>{checking ? 'Checking...' : 'Check duplicates'}</button>
-        <button className="btn btn-gold" onClick={() => save(false)} disabled={saving}>
+        <div />
+        <button className="btn btn-gold" onClick={save} disabled={saving}>
           <i className="ti ti-check" /> {saving ? 'Saving...' : 'Save Client'}
         </button>
       </div>

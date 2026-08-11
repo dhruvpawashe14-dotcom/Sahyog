@@ -4,10 +4,11 @@ import { useToast } from '../../components/common/Toast';
 import * as meetingService from './services/meetingService';
 import Modal from '../../components/common/Modal';
 import { useEmployees } from '../../hooks/useEmployees';
+import { toLocalDateStr } from '../../utils/date';
 
 function monthRange(year, month) {
-  const from = new Date(year, month, 1).toISOString().slice(0, 10);
-  const to = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+  const from = toLocalDateStr(new Date(year, month, 1));
+  const to = toLocalDateStr(new Date(year, month + 1, 0));
   return { from, to };
 }
 
@@ -43,7 +44,7 @@ export default function CalendarPage() {
   const cells = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
 
   const meetingsOn = (day) => {
-    const dateStr = new Date(year, month, day).toISOString().slice(0, 10);
+    const dateStr = toLocalDateStr(new Date(year, month, day));
     return meetings.filter((m) => m.meeting_date === dateStr);
   };
 

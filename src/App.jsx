@@ -14,10 +14,9 @@ const ClientDetailPage = lazy(() => import('./modules/clients/ClientDetailPage')
 const TicketsListPage = lazy(() => import('./modules/tickets/TicketsListPage'));
 const TicketFormPage = lazy(() => import('./modules/tickets/TicketFormPage'));
 const TicketDetailPage = lazy(() => import('./modules/tickets/TicketDetailPage'));
-const LeadsListPage = lazy(() => import('./modules/leads/LeadsListPage'));
+const LeadsPage = lazy(() => import('./modules/leads/LeadsPage'));
 const LeadFormPage = lazy(() => import('./modules/leads/LeadFormPage'));
 const LeadDetailPage = lazy(() => import('./modules/leads/LeadDetailPage'));
-const PipelinePage = lazy(() => import('./modules/leads/PipelinePage'));
 const ClaimsListPage = lazy(() => import('./modules/claims/ClaimsListPage'));
 const ClaimFormPage = lazy(() => import('./modules/claims/ClaimFormPage'));
 const ClaimDetailPage = lazy(() => import('./modules/claims/ClaimDetailPage'));
@@ -46,10 +45,10 @@ export default function App() {
                 <Route path="/clients" element={<ClientsListPage />} />
                 <Route path="/clients/new" element={<ClientFormPage />} />
                 <Route path="/clients/:id" element={<ClientDetailPage />} />
-                <Route path="/leads" element={<LeadsListPage />} />
+                <Route path="/leads" element={<LeadsPage />} />
                 <Route path="/leads/new" element={<LeadFormPage />} />
                 <Route path="/leads/:id" element={<LeadDetailPage />} />
-                <Route path="/pipeline" element={<PipelinePage />} />
+                <Route path="/pipeline" element={<LeadsPage />} />
                 <Route path="/claims" element={<ClaimsListPage />} />
                 <Route path="/claims/new" element={<ClaimFormPage />} />
                 <Route path="/claims/:id" element={<ClaimDetailPage />} />

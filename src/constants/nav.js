@@ -2,7 +2,6 @@ export const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'ti-layout-dashboard', path: '/', adminOnly: false },
   { id: 'clients', label: 'Clients', icon: 'ti-users', path: '/clients', adminOnly: false },
   { id: 'leads', label: 'Leads', icon: 'ti-user-plus', path: '/leads', adminOnly: false },
-  { id: 'pipeline', label: 'Pipeline', icon: 'ti-layout-kanban', path: '/pipeline', adminOnly: false },
   { id: 'claims', label: 'Claims', icon: 'ti-file-invoice', path: '/claims', adminOnly: false },
   { id: 'tickets', label: 'Tickets', icon: 'ti-ticket', path: '/tickets', adminOnly: false },
   { id: 'kyc', label: 'KYC Vault', icon: 'ti-file-certificate', path: '/kyc', adminOnly: false },
