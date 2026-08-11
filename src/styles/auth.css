@@ -1,10 +1,10 @@
 .auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--black2)}
 .auth-card{background:var(--ivory);border-radius:14px;padding:40px;width:360px;text-align:center}
-.logo-mark-lg{width:56px;height:56px;margin:0 auto 16px;background:linear-gradient(135deg,var(--gold2),var(--gold3));border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--black2)}
+.logo-mark-lg{width:56px;height:56px;margin:0 auto 16px;background:linear-gradient(135deg,var(--gold2),var(--gold3));border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:#fff}
 .auth-card h1{margin-bottom:4px}
 .auth-sub{color:var(--text3);font-size:12.5px;margin-bottom:24px}
 .auth-fld{text-align:left;margin-bottom:14px}
 .auth-fld label{font-size:11.5px;color:var(--text3);display:block;margin-bottom:6px}
 .auth-fld input{width:100%;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:13px;outline:none}
 .auth-err{color:var(--red);font-size:12px;margin-bottom:10px;text-align:left}
-.auth-btn{width:100%;background:linear-gradient(135deg,var(--gold2),var(--gold3));border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--black2)}
+.auth-btn{width:100%;background:linear-gradient(135deg,var(--gold2),var(--gold3));border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;color:#fff}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
@@ -6,11 +6,12 @@ import { createClient, findDuplicateClients } from './services/clientService';
 import { uploadDocument } from '../documents/services/documentService';
 import { logAudit } from '../../services/audit/auditService';
 import IDFieldWithUpload from '../../components/forms/IDFieldWithUpload';
+import { useEmployees } from '../../hooks/useEmployees';
 
 const empty = {
   full_name: '', mobile: '', email: '', dob: '', occupation: '',
   pan_number: '', aadhaar_number: '', passport_number: '', dl_number: '', voter_id: '', gstin: '',
-  address: '', city: '', state: '', pincode: '',
+  address: '', city: '', state: '', pincode: '', assigned_to: '',
 };
 
 // Maps each ID field to the doc_type label stored against the uploaded file.
@@ -33,6 +34,9 @@ export default function ClientFormPage() {
   const { user, profile } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const employees = useEmployees();
+
+  useEffect(() => { if (user && !form.assigned_to) setForm((f) => ({ ...f, assigned_to: user.id })); }, [user]);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -67,8 +71,8 @@ export default function ClientFormPage() {
         dob: form.dob || null,
         pan_number: form.pan_number?.toUpperCase() || null,
         passport_number: form.passport_number?.toUpperCase() || null,
-        assigned_to: user.id,
-        assigned_name: profile.full_name,
+        assigned_to: form.assigned_to || user.id,
+        assigned_name: (employees.find((e) => e.id === form.assigned_to) || profile).full_name,
         created_by: user.id,
       });
       await logAudit({ userId: user.id, userName: profile.full_name, action: 'CREATE', module: 'Clients', recordId: client.id, details: `Client created: ${client.full_name}` });
@@ -105,6 +109,12 @@ export default function ClientFormPage() {
           <div className="fld"><label>Email</label><input value={form.email} onChange={set('email')} /></div>
           <div className="fld"><label>Date of Birth</label><input type="date" value={form.dob} onChange={set('dob')} /></div>
           <div className="fld"><label>Occupation</label><input value={form.occupation} onChange={set('occupation')} /></div>
+          <div className="fld">
+            <label>Advisor</label>
+            <select value={form.assigned_to} onChange={set('assigned_to')}>
+              {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}{emp.id === user.id ? ' (You)' : ''}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 

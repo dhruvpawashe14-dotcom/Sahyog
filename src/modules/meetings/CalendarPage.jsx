@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import * as meetingService from './services/meetingService';
 import Modal from '../../components/common/Modal';
+import { useEmployees } from '../../hooks/useEmployees';
 
 function monthRange(year, month) {
   const from = new Date(year, month, 1).toISOString().slice(0, 10);
@@ -16,7 +17,10 @@ export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
   const [meetings, setMeetings] = useState([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', with_name: '', meeting_date: '', meeting_time: '', location: '' });
+  const [form, setForm] = useState({ title: '', with_name: '', meeting_date: '', meeting_time: '', location: '', assigned_to: '' });
+  const employees = useEmployees();
+
+  useEffect(() => { if (user && !form.assigned_to) setForm((f) => ({ ...f, assigned_to: user.id })); }, [user]);
 
   const load = () => {
     const { from, to } = monthRange(cursor.getFullYear(), cursor.getMonth());
@@ -26,7 +30,8 @@ export default function CalendarPage() {
 
   const save = async () => {
     if (!form.title || !form.meeting_date) { showToast('Title and date are required', 'error'); return; }
-    await meetingService.createMeeting({ ...form, assigned_to: user.id, assigned_name: profile.full_name, created_by: user.id });
+    const assignee = employees.find((e) => e.id === form.assigned_to) || profile;
+    await meetingService.createMeeting({ ...form, assigned_to: form.assigned_to || user.id, assigned_name: assignee.full_name, created_by: user.id });
     setOpen(false);
     showToast('Meeting scheduled', 'success');
     load();
@@ -70,6 +75,12 @@ export default function CalendarPage() {
         <div className="fld" style={{ marginTop: 10 }}><label>Date *</label><input type="date" value={form.meeting_date} onChange={(e) => setForm({ ...form, meeting_date: e.target.value })} /></div>
         <div className="fld" style={{ marginTop: 10 }}><label>Time</label><input type="time" value={form.meeting_time} onChange={(e) => setForm({ ...form, meeting_time: e.target.value })} /></div>
         <div className="fld" style={{ marginTop: 10 }}><label>Location</label><input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
+        <div className="fld" style={{ marginTop: 10 }}>
+          <label>Assign To</label>
+          <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}>
+            {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}{emp.id === user.id ? ' (You)' : ''}</option>)}
+          </select>
+        </div>
       </Modal>
     </div>
   );

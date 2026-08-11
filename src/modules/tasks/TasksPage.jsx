@@ -4,24 +4,28 @@ import { useToast } from '../../components/common/Toast';
 import * as taskService from './services/taskService';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
+import { useEmployees } from '../../hooks/useEmployees';
 
 const STATUSES = ['Pending', 'In Progress', 'Completed', 'Delayed'];
 
 export default function TasksPage() {
   const { user, profile, isAdmin } = useAuth();
   const { showToast } = useToast();
+  const employees = useEmployees();
   const [tasks, setTasks] = useState([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', due_date: '', priority: 'Normal' });
+  const [form, setForm] = useState({ title: '', due_date: '', priority: 'Normal', assigned_to: '' });
 
   const load = () => taskService.listTasks({ userId: user.id, isAdmin }).then(setTasks);
   useEffect(() => { if (user) load(); }, [user, isAdmin]);
+  useEffect(() => { if (user && !form.assigned_to) setForm((f) => ({ ...f, assigned_to: user.id })); }, [user]);
 
   const save = async () => {
     if (!form.title) { showToast('Title is required', 'error'); return; }
-    await taskService.createTask({ ...form, assigned_to: user.id, assigned_name: profile.full_name, created_by: user.id });
+    const assignee = employees.find((e) => e.id === form.assigned_to) || profile;
+    await taskService.createTask({ ...form, assigned_to: form.assigned_to || user.id, assigned_name: assignee.full_name, created_by: user.id });
     setOpen(false);
-    setForm({ title: '', due_date: '', priority: 'Normal' });
+    setForm({ title: '', due_date: '', priority: 'Normal', assigned_to: user.id });
     showToast('Task added', 'success');
     load();
   };
@@ -30,6 +34,7 @@ export default function TasksPage() {
     { key: 'title', label: 'Title' },
     { key: 'priority', label: 'Priority' },
     { key: 'due_date', label: 'Due' },
+    ...(isAdmin ? [{ key: 'assigned_name', label: 'Assigned To' }] : []),
     {
       key: 'status', label: 'Status', render: (row) => (
         <select value={row.status} onChange={async (e) => { await taskService.updateTaskStatus(row.id, e.target.value); load(); }}>
@@ -56,6 +61,12 @@ export default function TasksPage() {
           <label>Priority</label>
           <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
             <option>Low</option><option>Normal</option><option>High</option><option>Urgent</option>
+          </select>
+        </div>
+        <div className="fld" style={{ marginTop: 10 }}>
+          <label>Assign To</label>
+          <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}>
+            {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}{emp.id === user.id ? ' (You)' : ''}</option>)}
           </select>
         </div>
       </Modal>
