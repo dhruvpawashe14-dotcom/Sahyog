@@ -2,12 +2,12 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { NAV_ITEMS } from '../../constants/nav';
 
-export default function Sidebar() {
+export default function Sidebar({ open, onNavigate }) {
   const { profile, isAdmin, logout } = useAuth();
   const initials = (profile?.full_name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${open ? 'open' : ''}`}>
       <div className="logo">
         <div className="logo-mark">S</div>
         <div>
@@ -17,7 +17,7 @@ export default function Sidebar() {
       </div>
       <nav>
         {NAV_ITEMS.filter((i) => !i.adminOnly || isAdmin).map((item) => (
-          <NavLink key={item.id} to={item.path} className={({ isActive }) => (isActive ? 'active' : '')}>
+          <NavLink key={item.id} to={item.path} onClick={onNavigate} className={({ isActive }) => (isActive ? 'active' : '')}>
             <i className={`ti ${item.icon}`} />
             <span>{item.label}</span>
           </NavLink>

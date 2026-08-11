@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { globalSearch } from '../../services/search/searchService';
 import NotificationBell from './NotificationBell';
 
-export default function Topbar({ title }) {
+export default function Topbar({ title, onMenuClick }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
 
@@ -14,6 +14,7 @@ export default function Topbar({ title }) {
 
   return (
     <header className="topbar">
+      <button className="hamburger-btn icon-btn" onClick={onMenuClick}><i className="ti ti-menu-2" /></button>
       <span className="page-title">{title}</span>
       <div className="search-wrap">
         <i className="ti ti-search" />

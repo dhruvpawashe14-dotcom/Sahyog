@@ -8,6 +8,7 @@ export const NAV_ITEMS = [
   { id: 'kyc', label: 'KYC Vault', icon: 'ti-file-certificate', path: '/kyc', adminOnly: false },
   { id: 'tasks', label: 'Tasks', icon: 'ti-checklist', path: '/tasks', adminOnly: false },
   { id: 'calendar', label: 'Calendar', icon: 'ti-calendar', path: '/calendar', adminOnly: false },
+  { id: 'reports', label: 'Reports', icon: 'ti-chart-bar', path: '/reports', adminOnly: true },
   { id: 'audit', label: 'Audit Log', icon: 'ti-list-details', path: '/audit', adminOnly: true },
   { id: 'employees', label: 'Employees', icon: 'ti-building-community', path: '/employees', adminOnly: true },
   { id: 'settings', label: 'Settings', icon: 'ti-settings', path: '/settings', adminOnly: true },
