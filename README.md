@@ -1,4 +1,4 @@
-# Sahyog CRM v2 — Phase 1
+# MyAdvisor CRM v2 — Phase 1
 
 React + Vite rebuild of the original single-file `index.html` CRM, per the modular
 architecture spec. See `PHASE1_SUMMARY.md` for what changed vs the old app.

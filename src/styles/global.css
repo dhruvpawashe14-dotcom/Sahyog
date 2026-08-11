@@ -1,10 +1,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --ivory:#FFFFF0;--ivory2:#FAF8E8;--ivory3:#F5F2DC;--ivory4:#EDE9CC;
-  --gold:#B8960C;--gold2:#D4A017;--gold3:#F0C040;--gold-light:#FFF8DC;
-  --black:#0A0A0A;--black2:#1A1A1A;
+  --ivory:#FFFFFF;--ivory2:#F7F9FC;--ivory3:#EEF3F9;--ivory4:#E3EBF5;
+  --gold:#2E75B6;--gold2:#1F5FA8;--gold3:#5B9BD5;--gold-light:#DCEBF7;
+  --black:#0A0A0A;--black2:#14324F;
   --text:#0A0A0A;--text2:#3A3A3A;--text3:#6B6B6B;--text4:#9A9A9A;
-  --border2:#B8960C35;
+  --border2:#2E75B635;--border3:#2E75B655;
   --sidebar-w:230px;
   --red:#C0392B;--green:#1A7A4A;--amber:#B8730A;
 }
@@ -164,3 +164,24 @@ td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--ivory4)}
   .content{padding:16px}
   .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150}
 }
+
+.id-field-row{display:flex;gap:6px}
+.id-field-row input{flex:1}
+.id-upload-btn{display:flex;align-items:center;justify-content:center;width:38px;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;cursor:pointer;color:var(--text3)}
+.id-upload-btn:hover{border-color:var(--gold);color:var(--gold)}
+.id-file-chip{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--text3);background:var(--gold-light);border-radius:6px;padding:4px 8px}
+.id-file-chip button{background:none;border:none;cursor:pointer;color:var(--text4);margin-left:auto;display:flex}
+
+.quick-contact{display:inline-flex;gap:4px;margin-left:6px}
+.qc-btn{width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none}
+.qc-call{background:#1A4A8A15;color:#1A4A8A}
+.qc-wa{background:#1A7A4A15;color:#1A7A4A}
+.qc-btn:hover{opacity:0.7}
+
+@media (max-width: 880px) {
+  div[style*="grid-template-columns: 1fr 1fr 1fr"]{grid-template-columns:1fr !important}
+}
+
+.list-filter-bar{display:flex;align-items:center;gap:8px;background:var(--ivory3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;margin-bottom:12px;max-width:320px}
+.list-filter-bar input{flex:1;background:none;border:none;outline:none;font-size:13px}
+.list-filter-bar i{color:var(--text4)}

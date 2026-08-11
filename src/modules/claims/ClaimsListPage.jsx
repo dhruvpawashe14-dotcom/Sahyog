@@ -5,12 +5,14 @@ import { listClaims, claimAgeDays, bulkImportClaims } from './services/claimServ
 import { parseExcelFile, exportToExcel } from '../../utils/excel';
 import { useToast } from '../../components/common/Toast';
 import DataTable from '../../components/common/DataTable';
+import ListFilterBar from '../../components/common/ListFilterBar';
 
 export default function ClaimsListPage() {
   const { user, isAdmin } = useAuth();
   const { showToast } = useToast();
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
   const fileRef = useRef(null);
   const navigate = useNavigate();
 
@@ -37,6 +39,13 @@ export default function ClaimsListPage() {
     })), 'claims-export.xlsx');
   };
 
+  const q = filter.trim().toLowerCase();
+  const filtered = q ? claims.filter((c) =>
+    (c.client_name || '').toLowerCase().includes(q) ||
+    (c.claim_ref || '').toLowerCase().includes(q) ||
+    (c.policy_number || '').toLowerCase().includes(q)
+  ) : claims;
+
   const columns = [
     { key: 'claim_ref', label: 'Ref' },
     { key: 'client_name', label: 'Client' },
@@ -60,7 +69,7 @@ export default function ClaimsListPage() {
   return (
     <div>
       <div className="page-hdr">
-        <div><h1>Claims</h1><p>{claims.length} claims</p></div>
+        <div><h1>Claims</h1><p>{filtered.length} of {claims.length} claims</p></div>
         <div style={{ display: 'flex', gap: 10 }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={(e) => onImport(e.target.files[0])} />
           <button className="btn" onClick={() => fileRef.current.click()}><i className="ti ti-file-import" /> Import</button>
@@ -68,8 +77,9 @@ export default function ClaimsListPage() {
           <button className="btn btn-gold" onClick={() => navigate('/claims/new')}><i className="ti ti-plus" /> New Claim</button>
         </div>
       </div>
+      <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by client, ref, policy number..." />
       <div className="card" style={{ padding: 0 }}>
-        <DataTable columns={columns} rows={claims} loading={loading} emptyLabel="No claims yet" />
+        <DataTable columns={columns} rows={filtered} loading={loading} emptyLabel="No claims yet" />
       </div>
     </div>
   );

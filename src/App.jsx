@@ -41,7 +41,7 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route element={<ProtectedRoute><AppLayout title="Sahyog CRM" /></ProtectedRoute>}>
+              <Route element={<ProtectedRoute><AppLayout title="MyAdvisor CRM" /></ProtectedRoute>}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/clients" element={<ClientsListPage />} />
                 <Route path="/clients/new" element={<ClientFormPage />} />

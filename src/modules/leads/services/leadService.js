@@ -26,6 +26,15 @@ export async function createLead(payload) {
   return data;
 }
 
+// Duplicate detection for leads — mirrors the client-side check, since a lead entered twice
+// wastes just as much advisor time as a duplicate client.
+export async function findDuplicateLeads({ mobile, fullName }) {
+  if (!mobile) return [];
+  const { data, error } = await supabase.from('leads').select('id, full_name, mobile, stage, assigned_name').eq('mobile', mobile);
+  if (error) throw error;
+  return (data ?? []).map((m) => ({ ...m, matchType: 'mobile' }));
+}
+
 export async function updateLeadStage(id, stage, actorId, actorName) {
   const { data: before } = await supabase.from('leads').select('stage').eq('id', id).single();
   const { data, error } = await supabase

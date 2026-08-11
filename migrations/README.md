@@ -1,4 +1,4 @@
-# Sahyog CRM — Migrations
+# MyAdvisor CRM — Migrations
 
 Run in order, once, in Supabase SQL Editor:
 

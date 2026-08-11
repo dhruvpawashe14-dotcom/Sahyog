@@ -30,7 +30,7 @@ export default function LoginPage() {
     <div className="auth-screen">
       <form className="auth-card" onSubmit={submit}>
         <div className="logo-mark-lg">S</div>
-        <h1>Sahyog CRM</h1>
+        <h1>MyAdvisor CRM</h1>
         <p className="auth-sub">Sign in to your account</p>
         <div className="auth-fld">
           <label>Email Address</label>

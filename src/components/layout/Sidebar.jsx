@@ -11,7 +11,7 @@ export default function Sidebar({ open, onNavigate }) {
       <div className="logo">
         <div className="logo-mark">S</div>
         <div>
-          <div className="logo-text">Sahyog CRM</div>
+          <div className="logo-text">MyAdvisor CRM</div>
           <div className="logo-badge">v2 · modular</div>
         </div>
       </div>
