@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import * as claimService from './services/claimService';
 import QuickContact from '../../components/common/QuickContact';
+import { CLAIM_FIELD_CONFIG } from './claimFieldConfig';
 
 const DOC_TYPES = ['Claim Form', 'Death Certificate', 'Medical Report', 'Discharge Summary', 'Policy Copy', 'ID Proof', 'Other'];
 
@@ -57,7 +58,11 @@ export default function ClaimDetailPage() {
     <div className="ticket-detail">
       <div className="ticket-main card">
         <div className="page-hdr">
-          <div><span className="ticket-ref">{claim.claim_ref}</span><h1>{claim.client_name}</h1></div>
+          <div>
+            <span className="ticket-ref">{claim.claim_ref}</span>
+            {claim.claim_type && <span className="badge b-gold" style={{ marginLeft: 8 }}>{claim.claim_type}</span>}
+            <h1>{claim.client_name}</h1>
+          </div>
           <select value={claim.status} onChange={(e) => changeStatus(e.target.value)}>
             {claimService.CLAIM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -71,9 +76,25 @@ export default function ClaimDetailPage() {
 
         {tab === 'overview' && (
           <div className="form-grid" style={{ marginTop: 12 }}>
-            <div className="fld"><label>Policy Number</label><div className="field-val">{claim.policy_number || '—'}</div></div>
-            <div className="fld"><label>Claim Type</label><div className="field-val">{claim.claim_type || '—'}</div></div>
-            <div className="fld"><label>Amount</label><div className="field-val">{claim.claim_amount ? `₹${Number(claim.claim_amount).toLocaleString('en-IN')}` : '—'}</div></div>
+            {(CLAIM_FIELD_CONFIG[claim.claim_type] || []).filter((f) => f.type !== 'status').map((f) => {
+              let val;
+              if (f.target === 'top') val = claim[f.field];
+              else val = claim.details?.[f.field];
+              if (f.type === 'number' && val) val = `₹${Number(val).toLocaleString('en-IN')}`;
+              return (
+                <div key={f.field} className={`fld ${f.type === 'textarea' ? 'form-full' : ''}`}>
+                  <label>{f.label}</label>
+                  <div className="field-val">{val || '—'}</div>
+                </div>
+              );
+            })}
+            {!claim.claim_type && (
+              <>
+                <div className="fld"><label>Client</label><div className="field-val">{claim.client_name || '—'}</div></div>
+                <div className="fld"><label>Policy Number</label><div className="field-val">{claim.policy_number || '—'}</div></div>
+                <div className="fld"><label>Amount</label><div className="field-val">{claim.claim_amount ? `₹${Number(claim.claim_amount).toLocaleString('en-IN')}` : '—'}</div></div>
+              </>
+            )}
             <div className="fld"><label>Age</label><div className="field-val">{days === null ? 'Closed' : `${days} days`}</div></div>
           </div>
         )}
