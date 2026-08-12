@@ -3,8 +3,10 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import * as claimService from './services/claimService';
+import { notify } from '../../services/notifications/notificationService';
 import QuickContact from '../../components/common/QuickContact';
 import { CLAIM_FIELD_CONFIG } from './claimFieldConfig';
+import { capitalizeWords } from '../../utils/text';
 
 const DOC_TYPES = ['Claim Form', 'Death Certificate', 'Medical Report', 'Discharge Summary', 'Policy Copy', 'ID Proof', 'Other'];
 
@@ -29,6 +31,10 @@ export default function ClaimDetailPage() {
 
   const changeStatus = async (status) => {
     await claimService.updateClaimStatus(id, status, user.id, profile.full_name);
+    const notifyTargets = [claim.assigned_to, claim.rm_id].filter((tid) => tid && tid !== user.id);
+    for (const targetId of [...new Set(notifyTargets)]) {
+      await notify({ userId: targetId, title: `Claim status: ${status}`, body: claim.client_name, type: 'info', linkType: 'claim', linkId: id });
+    }
     showToast(`Claim status → ${status}`, 'success');
     load();
   };
@@ -136,7 +142,8 @@ export default function ClaimDetailPage() {
       <div className="ticket-side">
         <div className="card">
           <div className="card-title">Claim Info</div>
-          <div className="dup-row">Assigned: {claim.assigned_name || '—'}</div>
+          <div className="dup-row">RE: {capitalizeWords(claim.assigned_name) || '—'}</div>
+          <div className="dup-row">RM: {capitalizeWords(claim.rm_name) || '—'}</div>
           <div className="dup-row">Filed: {claim.filed_date}</div>
           <div className="dup-row">Notes: {claim.notes || '—'}</div>
         </div>

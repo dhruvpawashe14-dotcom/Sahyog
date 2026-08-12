@@ -1,10 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { globalSearch } from '../../services/search/searchService';
 import NotificationBell from './NotificationBell';
 
 export default function Topbar({ title, onMenuClick }) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
+  const inputRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  useEffect(() => { if (searchOpen) inputRef.current?.focus(); }, [searchOpen]);
+
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setSearchOpen(false);
+        setQuery('');
+        setResults(null);
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
   const onSearch = async (v) => {
     setQuery(v);
@@ -16,23 +33,30 @@ export default function Topbar({ title, onMenuClick }) {
     <header className="topbar">
       <button className="hamburger-btn icon-btn" onClick={onMenuClick}><i className="ti ti-menu-2" /></button>
       <span className="page-title">{title}</span>
-      <div className="search-wrap">
-        <i className="ti ti-search" />
-        <input placeholder="Search clients, tickets, PAN, mobile..." value={query} onChange={(e) => onSearch(e.target.value)} />
-        {results && (results.clients.length || results.tickets.length) ? (
-          <div className="search-results">
-            {results.clients.map((c) => (
-              <div key={`c-${c.id}`} className="search-row">
-                <i className="ti ti-user" /> {c.full_name} <span className="dim">{c.mobile}</span>
+      <div className="topbar-spacer" />
+      <div className="search-wrap-minimal" ref={wrapRef}>
+        {!searchOpen ? (
+          <button className="icon-btn" onClick={() => setSearchOpen(true)} title="Search"><i className="ti ti-search" /></button>
+        ) : (
+          <div className="search-wrap">
+            <i className="ti ti-search" />
+            <input ref={inputRef} placeholder="Search clients, tickets, PAN, mobile..." value={query} onChange={(e) => onSearch(e.target.value)} />
+            {results && (results.clients.length || results.tickets.length) ? (
+              <div className="search-results">
+                {results.clients.map((c) => (
+                  <div key={`c-${c.id}`} className="search-row">
+                    <i className="ti ti-user" /> {c.full_name} <span className="dim">{c.mobile}</span>
+                  </div>
+                ))}
+                {results.tickets.map((t) => (
+                  <div key={`t-${t.id}`} className="search-row">
+                    <i className="ti ti-ticket" /> {t.ticket_ref} — {t.subject}
+                  </div>
+                ))}
               </div>
-            ))}
-            {results.tickets.map((t) => (
-              <div key={`t-${t.id}`} className="search-row">
-                <i className="ti ti-ticket" /> {t.ticket_ref} — {t.subject}
-              </div>
-            ))}
+            ) : null}
           </div>
-        ) : null}
+        )}
       </div>
       <div className="topbar-right">
         <NotificationBell />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import * as taskService from './services/taskService';
+import { notify } from '../../services/notifications/notificationService';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
 import ScopeToggle from '../../components/common/ScopeToggle';
@@ -26,6 +27,9 @@ export default function TasksPage() {
     if (!form.title) { showToast('Title is required', 'error'); return; }
     const assignee = employees.find((e) => e.id === form.assigned_to) || profile;
     await taskService.createTask({ ...form, assigned_to: form.assigned_to || user.id, assigned_name: assignee.full_name, created_by: user.id });
+    if (form.assigned_to && form.assigned_to !== user.id) {
+      await notify({ userId: form.assigned_to, title: 'New task assigned to you', body: form.title, type: 'info', linkType: 'task', linkId: null });
+    }
     setOpen(false);
     setForm({ title: '', due_date: '', priority: 'Normal', assigned_to: user.id });
     showToast('Task added', 'success');

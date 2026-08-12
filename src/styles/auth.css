@@ -43,6 +43,16 @@
 .auth-footer-note{margin-top:22px;font-size:11.5px;color:var(--text4);font-style:italic}
 
 @media (max-width: 880px) {
-  .auth-hero{display:none}
-  .auth-form-side{flex:1}
+  .auth-screen{flex-direction:column}
+  .auth-hero{flex:none;height:150px;padding:0}
+  .auth-hero-content{padding:20px 24px;justify-content:center;align-items:center;gap:10px}
+  .auth-hero-top{flex-direction:column;gap:8px;text-align:center}
+  .auth-hero-mark{width:34px;height:34px;font-size:17px}
+  .auth-hero-mid,.auth-hero-bottom{display:none}
+  .auth-hero-glow-1{width:220px;height:220px;top:-80px;right:-60px}
+  .auth-hero-glow-2{width:180px;height:180px;bottom:-60px;left:-40px}
+  .auth-form-side{flex:1;padding:32px 20px}
+}
+@media (max-width: 420px) {
+  .auth-card{width:100%}
 }

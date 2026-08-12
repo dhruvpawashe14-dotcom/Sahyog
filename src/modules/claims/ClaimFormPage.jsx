@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { createClaim } from './services/claimService';
+import { notify } from '../../services/notifications/notificationService';
 import { logAudit } from '../../services/audit/auditService';
 import { useEmployees } from '../../hooks/useEmployees';
 import { CLAIM_TYPES, CLAIM_FIELD_CONFIG, splitFormValues } from './claimFieldConfig';
@@ -10,14 +11,15 @@ import { CLAIM_TYPES, CLAIM_FIELD_CONFIG, splitFormValues } from './claimFieldCo
 export default function ClaimFormPage() {
   const [claimType, setClaimType] = useState('');
   const [values, setValues] = useState({});
-  const [assignedTo, setAssignedTo] = useState('');
+  const [reId, setReId] = useState(''); // Relationship Executive — the claim's owner/assignee
+  const [rmId, setRmId] = useState(''); // Relationship Manager — secondary, optional
   const [saving, setSaving] = useState(false);
   const { user, profile } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const employees = useEmployees();
 
-  useEffect(() => { if (user && !assignedTo) setAssignedTo(user.id); }, [user]);
+  useEffect(() => { if (user && !reId) setReId(user.id); }, [user]);
 
   const setField = (field) => (e) => setValues({ ...values, [field]: e.target.value });
 
@@ -32,16 +34,28 @@ export default function ClaimFormPage() {
     setSaving(true);
     try {
       const { top, details } = splitFormValues(claimType, values);
-      const assignee = employees.find((e) => e.id === assignedTo) || profile;
+      const re = employees.find((e) => e.id === reId) || profile;
+      const rm = employees.find((e) => e.id === rmId);
       const claim = await createClaim({
         ...top,
         claim_type: claimType,
         details,
-        assigned_to: assignedTo || user.id,
-        assigned_name: assignee.full_name,
+        assigned_to: reId || user.id,
+        assigned_name: re.full_name,
+        rm_id: rmId || null,
+        rm_name: rm?.full_name || null,
         created_by: user.id,
       });
       await logAudit({ userId: user.id, userName: profile.full_name, action: 'CREATE', module: 'Claims', recordId: claim.id, details: `${claimType} claim filed: ${claim.client_name}` });
+
+      // Notify the RE and RM if this claim was assigned to someone other than the person filing it.
+      if (reId && reId !== user.id) {
+        await notify({ userId: reId, title: 'New claim assigned to you', body: `${profile.full_name} filed a ${claimType} claim for ${claim.client_name}`, type: 'info', linkType: 'claim', linkId: claim.id });
+      }
+      if (rmId && rmId !== user.id && rmId !== reId) {
+        await notify({ userId: rmId, title: 'You were tagged as RM on a claim', body: `${claimType} claim for ${claim.client_name}`, type: 'info', linkType: 'claim', linkId: claim.id });
+      }
+
       showToast('Claim filed', 'success');
       navigate(`/claims/${claim.id}`);
     } catch (e) {
@@ -70,6 +84,19 @@ export default function ClaimFormPage() {
           <div className="card">
             <div className="card-title">{claimType} Claim Details</div>
             <div className="form-grid">
+              <div className="fld">
+                <label>RE (Relationship Executive)</label>
+                <select value={reId} onChange={(e) => setReId(e.target.value)}>
+                  {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}{emp.id === user.id ? ' (You)' : ''}</option>)}
+                </select>
+              </div>
+              <div className="fld">
+                <label>RM (Relationship Manager)</label>
+                <select value={rmId} onChange={(e) => setRmId(e.target.value)}>
+                  <option value="">None</option>
+                  {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
+                </select>
+              </div>
               {visibleFields.map((f) => (
                 <div key={f.field} className={`fld ${f.type === 'textarea' ? 'form-full' : ''}`}>
                   <label>{f.label}{f.required ? ' *' : ''}</label>
@@ -84,16 +111,7 @@ export default function ClaimFormPage() {
           </div>
 
           <div className="ticket-side">
-            <div className="card">
-              <div className="card-title">Assignment</div>
-              <div className="fld">
-                <label>Assign To</label>
-                <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
-                  {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}{emp.id === user.id ? ' (You)' : ''}</option>)}
-                </select>
-              </div>
-            </div>
-            <button className="btn btn-gold" style={{ width: '100%', marginTop: 12 }} onClick={save} disabled={saving}>
+            <button className="btn btn-gold" style={{ width: '100%' }} onClick={save} disabled={saving}>
               <i className="ti ti-check" /> {saving ? 'Filing...' : 'File Claim'}
             </button>
           </div>

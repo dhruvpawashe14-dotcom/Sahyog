@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { createTicket, addTicketParticipant, uploadTicketAttachment, sendComment } from './services/ticketService';
+import { notify } from '../../services/notifications/notificationService';
 import { logAudit } from '../../services/audit/auditService';
 import { useEmployees } from '../../hooks/useEmployees';
 import { TICKET_TAXONOMY, TICKET_TYPES } from './constants';
@@ -44,7 +45,14 @@ export default function TicketFormPage() {
       });
 
       for (const pid of participantIds) {
-        if (pid !== assignedTo) await addTicketParticipant(ticket.id, pid);
+        if (pid !== assignedTo) {
+          await addTicketParticipant(ticket.id, pid);
+          await notify({ userId: pid, title: 'You were tagged on a ticket', body: ticket.subject, type: 'info', linkType: 'ticket', linkId: ticket.id });
+        }
+      }
+
+      if (assignedTo && assignedTo !== user.id) {
+        await notify({ userId: assignedTo, title: 'New ticket assigned to you', body: ticket.subject, type: 'info', linkType: 'ticket', linkId: ticket.id });
       }
 
       for (const file of files) {

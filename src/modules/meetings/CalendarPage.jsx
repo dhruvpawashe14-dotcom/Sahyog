@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import * as meetingService from './services/meetingService';
+import { notify } from '../../services/notifications/notificationService';
 import Modal from '../../components/common/Modal';
 import ScopeToggle from '../../components/common/ScopeToggle';
 import { useEmployees } from '../../hooks/useEmployees';
@@ -35,6 +36,9 @@ export default function CalendarPage() {
     if (!form.title || !form.meeting_date) { showToast('Title and date are required', 'error'); return; }
     const assignee = employees.find((e) => e.id === form.assigned_to) || profile;
     await meetingService.createMeeting({ ...form, assigned_to: form.assigned_to || user.id, assigned_name: assignee.full_name, created_by: user.id });
+    if (form.assigned_to && form.assigned_to !== user.id) {
+      await notify({ userId: form.assigned_to, title: 'New meeting assigned to you', body: `${form.title} on ${form.meeting_date}`, type: 'info', linkType: 'meeting', linkId: null });
+    }
     setOpen(false);
     setForm({ title: '', with_name: '', meeting_date: '', meeting_time: '', location: '', assigned_to: user.id });
     showToast('Meeting scheduled', 'success');

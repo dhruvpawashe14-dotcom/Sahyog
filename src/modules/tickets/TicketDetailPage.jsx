@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import * as ticketService from './services/ticketService';
+import { notify } from '../../services/notifications/notificationService';
 import { logAudit } from '../../services/audit/auditService';
 import { useToast } from '../../components/common/Toast';
 import { useEmployees } from '../../hooks/useEmployees';
@@ -55,6 +56,11 @@ export default function TicketDetailPage() {
   const changeStatus = async (status) => {
     await ticketService.updateTicketStatus(id, status, profile.full_name);
     await logAudit({ userId: user.id, userName: profile.full_name, action: 'UPDATE', module: 'Tickets', recordId: id, details: `Status → ${status}` });
+    // Notify the other party — whoever didn't make this change.
+    const notifyTargets = [ticket.raised_by, ticket.assigned_to].filter((id) => id && id !== user.id);
+    for (const targetId of [...new Set(notifyTargets)]) {
+      await notify({ userId: targetId, title: `Ticket ${status.toLowerCase()}`, body: ticket.subject, type: 'info', linkType: 'ticket', linkId: id });
+    }
     showToast(`Ticket marked ${status}`, 'success');
     load();
   };
@@ -62,6 +68,7 @@ export default function TicketDetailPage() {
   const addParticipant = async () => {
     if (!addingParticipant) return;
     await ticketService.addTicketParticipant(id, addingParticipant);
+    await notify({ userId: addingParticipant, title: 'You were tagged on a ticket', body: ticket.subject, type: 'info', linkType: 'ticket', linkId: id });
     setAddingParticipant('');
     showToast('Team member tagged', 'success');
     load();

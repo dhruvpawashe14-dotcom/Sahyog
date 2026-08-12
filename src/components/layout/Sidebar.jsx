@@ -1,10 +1,12 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { NAV_ITEMS } from '../../constants/nav';
+import { capitalizeWords } from '../../utils/text';
 
 export default function Sidebar({ open, onNavigate }) {
   const { profile, isAdmin, logout } = useAuth();
-  const initials = (profile?.full_name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  const displayName = capitalizeWords(profile?.full_name);
+  const initials = (displayName || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
@@ -27,7 +29,7 @@ export default function Sidebar({ open, onNavigate }) {
         <div className="user-pill">
           <div className="user-av">{initials}</div>
           <div>
-            <div className="user-name">{profile?.full_name}</div>
+            <div className="user-name">{displayName}</div>
             <div className="user-role">{isAdmin ? 'Admin · Super Access' : 'Advisor'}</div>
           </div>
         </div>

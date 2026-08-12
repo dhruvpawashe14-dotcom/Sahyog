@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { createLead, findDuplicateLeads } from './services/leadService';
+import { notify } from '../../services/notifications/notificationService';
 import { uploadLeadDocument } from '../documents/services/documentService';
 import { logAudit } from '../../services/audit/auditService';
 import { useEmployees } from '../../hooks/useEmployees';
@@ -53,6 +54,10 @@ export default function LeadFormPage() {
       stage: 'New Lead',
     });
     await logAudit({ userId: user.id, userName: profile.full_name, action: 'CREATE', module: 'Leads', recordId: lead.id, details: `Lead created: ${lead.full_name}` });
+
+    if (form.assigned_to && form.assigned_to !== user.id) {
+      await notify({ userId: form.assigned_to, title: 'New lead assigned to you', body: lead.full_name, type: 'info', linkType: 'lead', linkId: lead.id });
+    }
 
     for (const a of attachments) {
       await uploadLeadDocument({ leadId: lead.id, label: a.label || 'Attachment', file: a.file, uploadedBy: user.id, uploadedName: profile.full_name });

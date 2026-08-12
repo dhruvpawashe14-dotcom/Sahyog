@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchDashboardStats, fetchAttentionItems, fetchRecentActivity } from './services/dashboardService';
 import QuickContact from '../../components/common/QuickContact';
+import { capitalizeWords } from '../../utils/text';
 
 function greeting() {
   const h = new Date().getHours();
@@ -37,7 +38,7 @@ export default function DashboardPage() {
     <div>
       <div className="page-hdr">
         <div>
-          <h1>{greeting()}, <span className="accent">{profile?.full_name}</span></h1>
+          <h1>{greeting()}, <span className="accent">{capitalizeWords(profile?.full_name)}</span></h1>
           <p>{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
       </div>
