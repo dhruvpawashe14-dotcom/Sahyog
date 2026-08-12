@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/auth.css';
+import { DEFAULT_APP_NAME } from '../../constants/branding';
 
 const QUOTES = [
   { text: 'Every policy you write is a promise someone can lean on.', author: 'The work behind the work' },
@@ -54,7 +55,7 @@ export default function LoginPage() {
         <div className="auth-hero-content">
           <div className="auth-hero-top">
             <div className="auth-hero-mark"><i className="ti ti-shield-check" /></div>
-            <span className="auth-hero-brand">MyAdvisor CRM</span>
+            <span className="auth-hero-brand">{DEFAULT_APP_NAME}</span>
           </div>
 
           <div className="auth-hero-mid">

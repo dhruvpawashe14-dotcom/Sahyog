@@ -61,8 +61,8 @@ export default function CalendarPage() {
       <div className="page-hdr">
         <div><h1>Calendar</h1><p>{cursor.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p></div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn" onClick={() => setCursor(new Date(year, month - 1, 1))}><i className="ti ti-chevron-left" /></button>
-          <button className="btn" onClick={() => setCursor(new Date(year, month + 1, 1))}><i className="ti ti-chevron-right" /></button>
+          <button className="btn" onClick={() => setCursor(new Date(year, month - 1, 1))} aria-label="Previous month"><i className="ti ti-chevron-left" /></button>
+          <button className="btn" onClick={() => setCursor(new Date(year, month + 1, 1))} aria-label="Next month"><i className="ti ti-chevron-right" /></button>
           <button className="btn btn-gold" onClick={() => setOpen(true)}><i className="ti ti-plus" /> Schedule Meeting</button>
         </div>
       </div>

@@ -2,10 +2,12 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { NAV_ITEMS } from '../../constants/nav';
 import { capitalizeWords } from '../../utils/text';
+import { useCompanyName } from '../../hooks/useCompanyName';
 
 export default function Sidebar({ open, onNavigate }) {
   const { profile, isAdmin, logout } = useAuth();
   const displayName = capitalizeWords(profile?.full_name);
+  const companyName = useCompanyName();
   const initials = (displayName || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
@@ -13,7 +15,7 @@ export default function Sidebar({ open, onNavigate }) {
       <div className="logo">
         <div className="logo-mark">S</div>
         <div>
-          <div className="logo-text">MyAdvisor CRM</div>
+          <div className="logo-text">{companyName}</div>
           <div className="logo-badge">v2 · modular</div>
         </div>
       </div>

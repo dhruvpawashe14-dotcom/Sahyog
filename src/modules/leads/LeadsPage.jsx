@@ -6,6 +6,7 @@ import DataTable from '../../components/common/DataTable';
 import QuickContact from '../../components/common/QuickContact';
 import ListFilterBar from '../../components/common/ListFilterBar';
 import ScopeToggle from '../../components/common/ScopeToggle';
+import Pagination from '../../components/common/Pagination';
 
 export default function LeadsPage() {
   const { user, profile, isAdmin } = useAuth();
@@ -14,6 +15,8 @@ export default function LeadsPage() {
   const [filter, setFilter] = useState('');
   const [stageFilter, setStageFilter] = useState('');
   const [scope, setScope] = useState('all');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
   const [view, setView] = useState('list'); // 'list' | 'pipeline'
   const [dragId, setDragId] = useState(null);
   const navigate = useNavigate();
@@ -28,6 +31,9 @@ export default function LeadsPage() {
     const matchesStage = !stageFilter || l.stage === stageFilter;
     return matchesText && matchesStage;
   });
+
+  useEffect(() => { setPage(1); }, [filter, stageFilter, scope]);
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const onDrop = async (stage) => {
     if (!dragId) return;
@@ -75,7 +81,8 @@ export default function LeadsPage() {
             </select>
           </div>
           <div className="card" style={{ padding: 0 }}>
-            <DataTable columns={columns} rows={filtered} loading={loading} emptyLabel="No leads yet" />
+            <DataTable columns={columns} rows={pageRows} loading={loading} emptyLabel="No leads yet" />
+            <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPageChange={setPage} />
           </div>
         </>
       )}

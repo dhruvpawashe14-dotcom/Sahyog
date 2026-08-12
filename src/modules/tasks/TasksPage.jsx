@@ -6,6 +6,7 @@ import { notify } from '../../services/notifications/notificationService';
 import DataTable from '../../components/common/DataTable';
 import Modal from '../../components/common/Modal';
 import ScopeToggle from '../../components/common/ScopeToggle';
+import Pagination from '../../components/common/Pagination';
 import { useEmployees } from '../../hooks/useEmployees';
 
 const STATUSES = ['Pending', 'In Progress', 'Completed', 'Delayed'];
@@ -16,6 +17,8 @@ export default function TasksPage() {
   const employees = useEmployees();
   const [tasks, setTasks] = useState([]);
   const [scope, setScope] = useState('all');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', due_date: '', priority: 'Normal', assigned_to: '' });
 
@@ -38,6 +41,18 @@ export default function TasksPage() {
 
   const scoped = scope === 'mine' ? tasks.filter((t) => t.assigned_to === user?.id) : tasks;
 
+  useEffect(() => { setPage(1); }, [scope]);
+  const pageRows = scoped.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const changeTaskStatus = async (task, status) => {
+    await taskService.updateTaskStatus(task.id, status);
+    const notifyTargets = [task.assigned_to, task.created_by].filter((tid) => tid && tid !== user.id);
+    for (const targetId of [...new Set(notifyTargets)]) {
+      await notify({ userId: targetId, title: `Task ${status.toLowerCase()}`, body: task.title, type: 'info', linkType: 'task', linkId: null });
+    }
+    load();
+  };
+
   const columns = [
     { key: 'title', label: 'Title' },
     { key: 'priority', label: 'Priority' },
@@ -45,7 +60,7 @@ export default function TasksPage() {
     ...(isAdmin ? [{ key: 'assigned_name', label: 'Assigned To' }] : []),
     {
       key: 'status', label: 'Status', render: (row) => (
-        <select value={row.status} onChange={async (e) => { await taskService.updateTaskStatus(row.id, e.target.value); load(); }}>
+        <select value={row.status} onChange={(e) => changeTaskStatus(row, e.target.value)}>
           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       ),
@@ -62,7 +77,8 @@ export default function TasksPage() {
         mineCount={tasks.filter((t) => t.assigned_to === user?.id).length}
         allCount={tasks.length} />
       <div className="card" style={{ padding: 0 }}>
-        <DataTable columns={columns} rows={scoped} emptyLabel="No tasks yet" />
+        <DataTable columns={columns} rows={pageRows} emptyLabel="No tasks yet" />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={scoped.length} onPageChange={setPage} />
       </div>
 
       <Modal open={open} title="Add Task" onClose={() => setOpen(false)} footer={<button className="btn btn-gold" onClick={save}>Save</button>}>

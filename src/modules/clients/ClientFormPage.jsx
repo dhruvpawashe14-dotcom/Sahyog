@@ -7,6 +7,8 @@ import { uploadDocument } from '../documents/services/documentService';
 import { logAudit } from '../../services/audit/auditService';
 import IDFieldWithUpload from '../../components/forms/IDFieldWithUpload';
 import { useEmployees } from '../../hooks/useEmployees';
+import { filterValidFiles } from '../../utils/validators';
+import { validateMobile, validateEmail, validatePAN, validateAadhaar } from '../../utils/validators';
 
 const empty = {
   full_name: '', mobile: '', email: '', dob: '',
@@ -55,7 +57,9 @@ export default function ClientFormPage() {
   }, [form.mobile, form.email, form.pan_number, form.aadhaar_number, form.full_name]);
 
   const addOtherFiles = (fileList) => {
-    const newOnes = Array.from(fileList).map((file) => ({ file, docType: 'Other' }));
+    const { valid, errors } = filterValidFiles(fileList);
+    errors.forEach((e) => showToast(e, 'error'));
+    const newOnes = valid.map((file) => ({ file, docType: 'Other' }));
     setOtherFiles((prev) => [...prev, ...newOnes]);
   };
   const removeOtherFile = (idx) => setOtherFiles((prev) => prev.filter((_, i) => i !== idx));
@@ -65,7 +69,14 @@ export default function ClientFormPage() {
   const save = async () => {
     if (!form.full_name || !form.mobile) { showToast('Name and mobile are required', 'error'); return; }
     if (!form.pan_number.trim()) { showToast('PAN number is required', 'error'); return; }
-    if (!form.aadhaar_number.trim()) { showToast('Aadhaar number is required', 'error'); return; }
+    const mobileErr = validateMobile(form.mobile);
+    if (mobileErr) { showToast(mobileErr, 'error'); return; }
+    const emailErr = validateEmail(form.email);
+    if (emailErr) { showToast(emailErr, 'error'); return; }
+    const panErr = validatePAN(form.pan_number);
+    if (panErr) { showToast(panErr, 'error'); return; }
+    const aadhaarErr = validateAadhaar(form.aadhaar_number);
+    if (aadhaarErr) { showToast(aadhaarErr, 'error'); return; }
     setSaving(true);
     try {
       const re = employees.find((e) => e.id === form.assigned_to) || profile;
@@ -140,12 +151,12 @@ export default function ClientFormPage() {
       </div>
 
       <div className="card" style={{ marginTop: 14 }}>
-        <div className="card-title">Identity Documents <span className="dim">— PAN & Aadhaar numbers required, files optional</span></div>
+        <div className="card-title">Identity Documents <span className="dim">— PAN required (corporate clients: Aadhaar optional), files optional</span></div>
         <div className="form-grid">
           {ID_DOCS.map((doc) => (
             <IDFieldWithUpload
               key={doc.key}
-              label={doc.key === 'pan_number' || doc.key === 'aadhaar_number' ? `${doc.label} *` : doc.label}
+              label={doc.key === 'pan_number' ? `${doc.label} *` : doc.label}
               value={form[doc.key]}
               onChange={set(doc.key)}
               uppercase={doc.uppercase}
@@ -179,7 +190,7 @@ export default function ClientFormPage() {
             {otherFiles.map((f, i) => (
               <div key={i} className="id-file-chip" style={{ marginTop: 0 }}>
                 <i className="ti ti-file" /><span>{f.file.name}</span>
-                <button type="button" onClick={() => removeOtherFile(i)}><i className="ti ti-x" /></button>
+                <button type="button" onClick={() => removeOtherFile(i)} aria-label={`Remove ${f.file.name}`}><i className="ti ti-x" /></button>
               </div>
             ))}
           </div>

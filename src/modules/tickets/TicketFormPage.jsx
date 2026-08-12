@@ -6,6 +6,7 @@ import { createTicket, addTicketParticipant, uploadTicketAttachment, sendComment
 import { notify } from '../../services/notifications/notificationService';
 import { logAudit } from '../../services/audit/auditService';
 import { useEmployees } from '../../hooks/useEmployees';
+import { filterValidFiles } from '../../utils/validators';
 import { TICKET_TAXONOMY, TICKET_TYPES } from './constants';
 
 const SLA_HOURS = { Urgent: 4, High: 24, Medium: 48, Low: 96 };
@@ -26,7 +27,11 @@ export default function TicketFormPage() {
   const [files, setFiles] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  const addFiles = (fileList) => setFiles((prev) => [...prev, ...Array.from(fileList)]);
+  const addFiles = (fileList) => {
+    const { valid, errors } = filterValidFiles(fileList);
+    errors.forEach((e) => showToast(e, 'error'));
+    setFiles((prev) => [...prev, ...valid]);
+  };
   const removeFile = (idx) => setFiles((prev) => prev.filter((_, i) => i !== idx));
 
   const save = async () => {
@@ -116,7 +121,7 @@ export default function TicketFormPage() {
               {files.map((f, i) => (
                 <div key={i} className="id-file-chip" style={{ marginTop: 0 }}>
                   <i className="ti ti-file" /><span>{f.name}</span>
-                  <button type="button" onClick={() => removeFile(i)}><i className="ti ti-x" /></button>
+                  <button type="button" onClick={() => removeFile(i)} aria-label={`Remove ${f.name}`}><i className="ti ti-x" /></button>
                 </div>
               ))}
             </div>

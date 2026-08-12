@@ -7,6 +7,7 @@ import { useToast } from '../../components/common/Toast';
 import DataTable from '../../components/common/DataTable';
 import ListFilterBar from '../../components/common/ListFilterBar';
 import ScopeToggle from '../../components/common/ScopeToggle';
+import Pagination from '../../components/common/Pagination';
 
 export default function ClaimsListPage() {
   const { user, isAdmin } = useAuth();
@@ -15,6 +16,8 @@ export default function ClaimsListPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [scope, setScope] = useState('all');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
   const fileRef = useRef(null);
   const navigate = useNavigate();
 
@@ -48,6 +51,9 @@ export default function ClaimsListPage() {
     (c.claim_ref || '').toLowerCase().includes(q) ||
     (c.policy_number || '').toLowerCase().includes(q)
   ) : scoped;
+
+  useEffect(() => { setPage(1); }, [filter, scope]);
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const columns = [
     { key: 'claim_ref', label: 'Ref' },
@@ -87,7 +93,8 @@ export default function ClaimsListPage() {
         <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by client, ref, policy number..." />
       </div>
       <div className="card" style={{ padding: 0 }}>
-        <DataTable columns={columns} rows={filtered} loading={loading} emptyLabel="No claims yet" />
+        <DataTable columns={columns} rows={pageRows} loading={loading} emptyLabel="No claims yet" />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPageChange={setPage} />
       </div>
     </div>
   );

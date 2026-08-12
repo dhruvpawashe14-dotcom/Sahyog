@@ -1,7 +1,7 @@
 import { supabase } from '../../../services/supabase/client';
 
 export async function listTasks() {
-  const { data, error } = await supabase.from('tasks').select('*').order('due_date', { ascending: true });
+  const { data, error } = await supabase.from('tasks').select('*').order('due_date', { ascending: true }).limit(1000);
   if (error) throw error;
   return data;
 }

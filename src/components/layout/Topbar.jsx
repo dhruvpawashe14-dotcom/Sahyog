@@ -23,20 +23,25 @@ export default function Topbar({ title, onMenuClick }) {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  const onSearch = async (v) => {
+  const debounceRef = useRef(null);
+
+  const onSearch = (v) => {
     setQuery(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     if (v.trim().length < 2) { setResults(null); return; }
-    setResults(await globalSearch(v));
+    debounceRef.current = setTimeout(async () => {
+      setResults(await globalSearch(v));
+    }, 350);
   };
 
   return (
     <header className="topbar">
-      <button className="hamburger-btn icon-btn" onClick={onMenuClick}><i className="ti ti-menu-2" /></button>
+      <button className="hamburger-btn icon-btn" onClick={onMenuClick} aria-label="Open menu"><i className="ti ti-menu-2" /></button>
       <span className="page-title">{title}</span>
       <div className="topbar-spacer" />
       <div className="search-wrap-minimal" ref={wrapRef}>
         {!searchOpen ? (
-          <button className="icon-btn" onClick={() => setSearchOpen(true)} title="Search"><i className="ti ti-search" /></button>
+          <button className="icon-btn" onClick={() => setSearchOpen(true)} title="Search" aria-label="Open search"><i className="ti ti-search" /></button>
         ) : (
           <div className="search-wrap">
             <i className="ti ti-search" />

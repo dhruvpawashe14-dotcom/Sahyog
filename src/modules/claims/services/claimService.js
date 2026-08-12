@@ -1,15 +1,27 @@
 import { supabase } from '../../../services/supabase/client';
+import { validateFileSize } from '../../../utils/validators';
 
 export const CLAIM_STATUSES = ['Filed', 'Under Review', 'Documents Pending', 'Approved', 'Rejected', 'Settled'];
 
 export async function listClaims() {
-  const { data, error } = await supabase.from('claims').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('claims').select('*').order('created_at', { ascending: false }).limit(1000);
   if (error) throw error;
   return data;
 }
 
 export async function getClaim(id) {
   const { data, error } = await supabase.from('claims').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateClaim(id, payload) {
+  const { data, error } = await supabase
+    .from('claims')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
   if (error) throw error;
   return data;
 }
@@ -59,6 +71,8 @@ export async function listClaimDocuments(claimId) {
 }
 
 export async function uploadClaimDocument({ claimId, docType, file, uploadedBy, uploadedName }) {
+  const sizeErr = validateFileSize(file);
+  if (sizeErr) throw new Error(sizeErr);
   const path = `claims/${claimId}/${Date.now()}_${file.name}`;
   const { error: upErr } = await supabase.storage.from('claim-documents').upload(path, file);
   if (upErr) throw upErr;

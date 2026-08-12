@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import * as claimService from './services/claimService';
 import { notify } from '../../services/notifications/notificationService';
-import QuickContact from '../../components/common/QuickContact';
+import { logAudit } from '../../services/audit/auditService';
+import { useEmployees } from '../../hooks/useEmployees';
 import { CLAIM_FIELD_CONFIG } from './claimFieldConfig';
 import { capitalizeWords } from '../../utils/text';
 
@@ -14,12 +15,18 @@ export default function ClaimDetailPage() {
   const { id } = useParams();
   const { user, profile } = useAuth();
   const { showToast } = useToast();
+  const employees = useEmployees();
   const [claim, setClaim] = useState(null);
   const [activities, setActivities] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [tab, setTab] = useState('overview');
   const [docType, setDocType] = useState('Other');
   const [uploading, setUploading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editValues, setEditValues] = useState({});
+  const [editRe, setEditRe] = useState('');
+  const [editRm, setEditRm] = useState('');
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
 
   const load = async () => {
@@ -28,6 +35,58 @@ export default function ClaimDetailPage() {
     setDocuments(await claimService.listClaimDocuments(id));
   };
   useEffect(() => { load(); }, [id]);
+
+  const startEdit = () => {
+    const fields = CLAIM_FIELD_CONFIG[claim.claim_type] || [];
+    const vals = {};
+    for (const f of fields) {
+      if (f.type === 'status') continue;
+      vals[f.field] = f.target === 'top' ? (claim[f.field] ?? '') : (claim.details?.[f.field] ?? '');
+    }
+    setEditValues(vals);
+    setEditRe(claim.assigned_to || '');
+    setEditRm(claim.rm_id || '');
+    setEditing(true);
+  };
+
+  const cancelEdit = () => setEditing(false);
+
+  const saveEdit = async () => {
+    setSaving(true);
+    try {
+      const fields = CLAIM_FIELD_CONFIG[claim.claim_type] || [];
+      const top = {};
+      const details = { ...claim.details };
+      for (const f of fields) {
+        if (f.type === 'status') continue;
+        const v = editValues[f.field];
+        if (f.target === 'top') top[f.field] = f.type === 'number' ? (v === '' ? null : Number(v)) : (v || null);
+        else details[f.field] = v || null;
+      }
+      const re = employees.find((e) => e.id === editRe);
+      const rm = employees.find((e) => e.id === editRm);
+      await claimService.updateClaim(id, {
+        ...top, details,
+        assigned_to: editRe || null,
+        assigned_name: re?.full_name || null,
+        rm_id: editRm || null,
+        rm_name: rm?.full_name || null,
+      });
+      await claimService.logClaimActivity(id, user.id, profile.full_name, 'CLAIM_EDITED', null, null, 'Details updated');
+      await logAudit({ userId: user.id, userName: profile.full_name, action: 'UPDATE', module: 'Claims', recordId: id, details: 'Claim details edited' });
+      const notifyTargets = [editRe, editRm, claim.assigned_to, claim.rm_id].filter((tid) => tid && tid !== user.id);
+      for (const targetId of [...new Set(notifyTargets)]) {
+        await notify({ userId: targetId, title: 'Claim details updated', body: claim.client_name, type: 'info', linkType: 'claim', linkId: id });
+      }
+      showToast('Claim updated', 'success');
+      setEditing(false);
+      load();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const changeStatus = async (status) => {
     await claimService.updateClaimStatus(id, status, user.id, profile.full_name);
@@ -59,6 +118,7 @@ export default function ClaimDetailPage() {
 
   if (!claim) return <div className="full-loader"><i className="spin ti ti-loader" /></div>;
   const days = claimService.claimAgeDays(claim);
+  const fields = (CLAIM_FIELD_CONFIG[claim.claim_type] || []).filter((f) => f.type !== 'status');
 
   return (
     <div className="ticket-detail">
@@ -69,23 +129,26 @@ export default function ClaimDetailPage() {
             {claim.claim_type && <span className="badge b-gold" style={{ marginLeft: 8 }}>{claim.claim_type}</span>}
             <h1>{claim.client_name}</h1>
           </div>
-          <select value={claim.status} onChange={(e) => changeStatus(e.target.value)}>
-            {claimService.CLAIM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select value={claim.status} onChange={(e) => changeStatus(e.target.value)}>
+              {claimService.CLAIM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            {tab === 'overview' && !editing && (
+              <button className="btn" onClick={startEdit}><i className="ti ti-edit" /> Edit</button>
+            )}
+          </div>
         </div>
 
         <div className="tabs">
           {['overview', 'documents', 'timeline'].map((t) => (
-            <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t[0].toUpperCase() + t.slice(1)}</button>
+            <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); setEditing(false); }}>{t[0].toUpperCase() + t.slice(1)}</button>
           ))}
         </div>
 
-        {tab === 'overview' && (
+        {tab === 'overview' && !editing && (
           <div className="form-grid" style={{ marginTop: 12 }}>
-            {(CLAIM_FIELD_CONFIG[claim.claim_type] || []).filter((f) => f.type !== 'status').map((f) => {
-              let val;
-              if (f.target === 'top') val = claim[f.field];
-              else val = claim.details?.[f.field];
+            {fields.map((f) => {
+              let val = f.target === 'top' ? claim[f.field] : claim.details?.[f.field];
               if (f.type === 'number' && val) val = `₹${Number(val).toLocaleString('en-IN')}`;
               return (
                 <div key={f.field} className={`fld ${f.type === 'textarea' ? 'form-full' : ''}`}>
@@ -94,14 +157,43 @@ export default function ClaimDetailPage() {
                 </div>
               );
             })}
-            {!claim.claim_type && (
-              <>
-                <div className="fld"><label>Client</label><div className="field-val">{claim.client_name || '—'}</div></div>
-                <div className="fld"><label>Policy Number</label><div className="field-val">{claim.policy_number || '—'}</div></div>
-                <div className="fld"><label>Amount</label><div className="field-val">{claim.claim_amount ? `₹${Number(claim.claim_amount).toLocaleString('en-IN')}` : '—'}</div></div>
-              </>
-            )}
             <div className="fld"><label>Age</label><div className="field-val">{days === null ? 'Closed' : `${days} days`}</div></div>
+          </div>
+        )}
+
+        {tab === 'overview' && editing && (
+          <div style={{ marginTop: 12 }}>
+            <div className="form-grid">
+              <div className="fld">
+                <label>RE (Relationship Executive)</label>
+                <select value={editRe} onChange={(e) => setEditRe(e.target.value)}>
+                  {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
+                </select>
+              </div>
+              <div className="fld">
+                <label>RM (Relationship Manager)</label>
+                <select value={editRm} onChange={(e) => setEditRm(e.target.value)}>
+                  <option value="">None</option>
+                  {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
+                </select>
+              </div>
+              {fields.map((f) => (
+                <div key={f.field} className={`fld ${f.type === 'textarea' ? 'form-full' : ''}`}>
+                  <label>{f.label}</label>
+                  <input
+                    type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
+                    value={editValues[f.field] || ''}
+                    onChange={(e) => setEditValues({ ...editValues, [f.field]: e.target.value })}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="page-hdr" style={{ marginTop: 16 }}>
+              <button className="btn" onClick={cancelEdit}>Cancel</button>
+              <button className="btn btn-gold" onClick={saveEdit} disabled={saving}>
+                <i className="ti ti-check" /> {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -133,6 +225,7 @@ export default function ClaimDetailPage() {
               <div key={a.id} className="dup-row">
                 <b>{a.actor_name}</b> — {a.action.replace(/_/g, ' ')}
                 {a.old_value ? <span className="dim"> {a.old_value} → {a.new_value}</span> : a.new_value ? <span className="dim"> {a.new_value}</span> : null}
+                {a.note ? <span className="dim"> — {a.note}</span> : null}
                 <div style={{ fontSize: 11, color: 'var(--text4)' }}>{new Date(a.created_at).toLocaleString()}</div>
               </div>
             ))}

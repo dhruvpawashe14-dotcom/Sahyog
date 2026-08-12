@@ -1,0 +1,36 @@
+name: CI
+
+# Runs on every push and every pull request. This is the loop-closer for automated
+# testing — before this, tests existed but nothing forced them to run before a deploy.
+# Now a failing test (or a broken build) shows up as a red X on GitHub, and blocks
+# merging into main if you turn on branch protection (see note at the bottom).
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build (with placeholder env — verifies the build compiles, doesn't need real secrets)
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-key-for-build-check-only

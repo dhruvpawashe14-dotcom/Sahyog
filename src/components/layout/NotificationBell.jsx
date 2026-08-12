@@ -18,7 +18,7 @@ export default function NotificationBell() {
 
   return (
     <div className="notif-wrap">
-      <button className="icon-btn" onClick={() => setOpen(!open)}>
+      <button className="icon-btn" onClick={() => setOpen(!open)} aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}>
         <i className="ti ti-bell" />
         {unread > 0 && <span className="notif-dot" />}
       </button>

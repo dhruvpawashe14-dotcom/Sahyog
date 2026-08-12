@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import * as leadService from './services/leadService';
 import { logAudit } from '../../services/audit/auditService';
+import { notify } from '../../services/notifications/notificationService';
+import { listLeadDocuments } from '../documents/services/documentService';
 
 export default function LeadDetailPage() {
   const { id } = useParams();
@@ -12,15 +14,20 @@ export default function LeadDetailPage() {
   const navigate = useNavigate();
   const [lead, setLead] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [attachments, setAttachments] = useState([]);
 
   const load = async () => {
     setLead(await leadService.getLead(id));
     setActivities(await leadService.listActivities(id));
+    setAttachments(await listLeadDocuments(id));
   };
   useEffect(() => { load(); }, [id]);
 
   const changeStage = async (stage) => {
     await leadService.updateLeadStage(id, stage, user.id, profile.full_name);
+    if (lead.assigned_to && lead.assigned_to !== user.id) {
+      await notify({ userId: lead.assigned_to, title: `Lead stage: ${stage}`, body: lead.full_name, type: 'info', linkType: 'lead', linkId: id });
+    }
     showToast(`Stage → ${stage}`, 'success');
     load();
   };
@@ -63,6 +70,17 @@ export default function LeadDetailPage() {
           <div className="dup-row">City: {lead.city || '—'}</div>
           <div className="dup-row">Notes: {lead.notes || '—'}</div>
         </div>
+        {attachments.length > 0 && (
+          <div className="card" style={{ marginTop: 12 }}>
+            <div className="card-title">Attachments</div>
+            {attachments.map((a) => (
+              <div key={a.id} className="dup-row">
+                <i className="ti ti-file" /> {a.doc_type} — {a.file_name}
+                {a.file_url && <a href={a.file_url} target="_blank" rel="noreferrer" className="link-btn" style={{ marginLeft: 8 }}>View</a>}
+              </div>
+            ))}
+          </div>
+        )}
         {lead.stage !== 'Closed Lost' && (
           <button className="btn btn-gold" style={{ width: '100%', marginTop: 12 }} onClick={convert}>
             <i className="ti ti-user-check" /> Convert to Client

@@ -1,4 +1,5 @@
 import { supabase } from '../../../services/supabase/client';
+import { validateFileSize } from '../../../utils/validators';
 
 const SLA_HOURS = { Urgent: 4, High: 24, Medium: 48, Low: 96 };
 
@@ -15,7 +16,7 @@ export function slaStatus(ticket) {
 
 export async function listTickets({ userId, userName, isAdmin }) {
   if (isAdmin) {
-    const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false }).limit(1000);
     if (error) throw error;
     return data;
   }
@@ -95,6 +96,8 @@ export async function sendComment({ ticketId, authorId, authorName, body, isFile
 }
 
 export async function uploadTicketAttachment(ticketId, file) {
+  const sizeErr = validateFileSize(file);
+  if (sizeErr) throw new Error(sizeErr);
   const path = `tickets/${ticketId}/${Date.now()}_${file.name}`;
   const { error: upErr } = await supabase.storage.from('ticket-attachments').upload(path, file);
   if (upErr) throw upErr;

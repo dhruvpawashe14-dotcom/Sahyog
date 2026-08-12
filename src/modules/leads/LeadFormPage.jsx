@@ -8,6 +8,7 @@ import { uploadLeadDocument } from '../documents/services/documentService';
 import { logAudit } from '../../services/audit/auditService';
 import { useEmployees } from '../../hooks/useEmployees';
 import { INSURANCE_PRODUCTS } from '../../constants/products';
+import { validateMobile, validateEmail } from '../../utils/validators';
 
 const empty = { full_name: '', mobile: '', email: '', product: '', city: '', notes: '', follow_up_date: '', assigned_to: '', lead_category: '' };
 
@@ -43,6 +44,10 @@ export default function LeadFormPage() {
 
   const save = async () => {
     if (!form.full_name || !form.mobile) { showToast('Name and mobile are required', 'error'); return; }
+    const mobileErr = validateMobile(form.mobile);
+    if (mobileErr) { showToast(mobileErr, 'error'); return; }
+    const emailErr = validateEmail(form.email);
+    if (emailErr) { showToast(emailErr, 'error'); return; }
     const assignee = employees.find((e) => e.id === form.assigned_to) || profile;
     const lead = await createLead({
       ...form,

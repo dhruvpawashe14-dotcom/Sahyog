@@ -1,7 +1,7 @@
 import { supabase } from '../../../services/supabase/client';
 
 export async function listClients() {
-  const { data, error } = await supabase.from('clients').select('*').order('updated_at', { ascending: false });
+  const { data, error } = await supabase.from('clients').select('*').order('updated_at', { ascending: false }).limit(1000);
   if (error) throw error;
   return data;
 }
@@ -27,24 +27,6 @@ export async function updateClient(id, payload) {
     .single();
   if (error) throw error;
   return data;
-}
-
-// Convert an existing lead into a client record (Phase 2 will wire this to the leads pipeline UI).
-export async function convertLeadToClient(lead) {
-  const payload = {
-    full_name: lead.full_name,
-    mobile: lead.mobile,
-    email: lead.email,
-    address: lead.address,
-    city: lead.city,
-    state: lead.state,
-    pan_number: lead.pan_number,
-    aadhaar_number: lead.aadhaar_number,
-    assigned_to: lead.assigned_to,
-    assigned_name: lead.assigned_name,
-    source_lead_id: lead.id,
-  };
-  return createClient(payload);
 }
 
 // Duplicate detection: checks mobile + PAN against existing clients before insert.

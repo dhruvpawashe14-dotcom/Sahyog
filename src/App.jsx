@@ -6,6 +6,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './modules/auth/LoginPage';
 import DashboardPage from './modules/dashboard/DashboardPage';
+import { DEFAULT_APP_NAME } from './constants/branding';
 
 // Code-split everything else — cuts the initial bundle down (Phase 3: performance optimisation).
 const ClientsListPage = lazy(() => import('./modules/clients/ClientsListPage'));
@@ -40,7 +41,7 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route element={<ProtectedRoute><AppLayout title="MyAdvisor CRM" /></ProtectedRoute>}>
+              <Route element={<ProtectedRoute><AppLayout title={DEFAULT_APP_NAME} /></ProtectedRoute>}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/clients" element={<ClientsListPage />} />
                 <Route path="/clients/new" element={<ClientFormPage />} />

@@ -1,4 +1,5 @@
 import { supabase } from '../../../services/supabase/client';
+import { validateFileSize } from '../../../utils/validators';
 
 export async function listClientDocuments(clientId) {
   const { data, error } = await supabase
@@ -11,6 +12,8 @@ export async function listClientDocuments(clientId) {
 }
 
 export async function uploadDocument({ clientId, docType, file, uploadedBy, uploadedName }) {
+  const sizeErr = validateFileSize(file);
+  if (sizeErr) throw new Error(sizeErr);
   const path = `kyc/${clientId}/${Date.now()}_${file.name}`;
   const { error: upErr } = await supabase.storage.from('kyc-documents').upload(path, file);
   if (upErr) throw upErr;
@@ -50,6 +53,8 @@ export async function listLeadDocuments(leadId) {
 }
 
 export async function uploadLeadDocument({ leadId, label, file, uploadedBy, uploadedName }) {
+  const sizeErr = validateFileSize(file);
+  if (sizeErr) throw new Error(sizeErr);
   const path = `leads/${leadId}/${Date.now()}_${file.name}`;
   const { error: upErr } = await supabase.storage.from('kyc-documents').upload(path, file);
   if (upErr) throw upErr;

@@ -7,7 +7,7 @@ export const STAGES = [
 ];
 
 export async function listLeads() {
-  const { data, error } = await supabase.from('leads').select('*').order('updated_at', { ascending: false });
+  const { data, error } = await supabase.from('leads').select('*').order('updated_at', { ascending: false }).limit(1000);
   if (error) throw error;
   return data;
 }

@@ -26,6 +26,11 @@ export async function notify({ userId, title, body, type = 'info', linkType, lin
     link_id: linkId ?? null,
   });
   if (error) throw error;
+
+  // Email fallback — best-effort, never blocks or fails the in-app notification above.
+  // If the Edge Function isn't deployed yet, this just fails silently and logs a warning.
+  supabase.functions.invoke('send-notification-email', { body: { userId, title, body } })
+    .catch((e) => console.warn('Email notification failed (in-app notification still succeeded):', e.message));
 }
 
 export function subscribeToNotifications(userId, onInsert) {

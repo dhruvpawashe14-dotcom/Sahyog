@@ -6,6 +6,7 @@ import DataTable from '../../components/common/DataTable';
 import QuickContact from '../../components/common/QuickContact';
 import ListFilterBar from '../../components/common/ListFilterBar';
 import ScopeToggle from '../../components/common/ScopeToggle';
+import Pagination from '../../components/common/Pagination';
 
 export default function ClientsListPage() {
   const { user } = useAuth();
@@ -13,6 +14,8 @@ export default function ClientsListPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [scope, setScope] = useState('all');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,6 +31,9 @@ export default function ClientsListPage() {
     (c.pan_number || '').toLowerCase().includes(q) ||
     (c.email || '').toLowerCase().includes(q)
   ) : scoped;
+
+  useEffect(() => { setPage(1); }, [filter, scope]);
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const columns = [
     { key: 'full_name', label: 'Name' },
@@ -55,7 +61,8 @@ export default function ClientsListPage() {
         <ListFilterBar value={filter} onChange={setFilter} placeholder="Filter by name, mobile, PAN, email..." />
       </div>
       <div className="card" style={{ padding: 0 }}>
-        <DataTable columns={columns} rows={filtered} loading={loading} emptyLabel="No clients yet" />
+        <DataTable columns={columns} rows={pageRows} loading={loading} emptyLabel="No clients yet" />
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPageChange={setPage} />
       </div>
     </div>
   );

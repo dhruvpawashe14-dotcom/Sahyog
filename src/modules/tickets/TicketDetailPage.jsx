@@ -32,10 +32,20 @@ export default function TicketDetailPage() {
   useEffect(() => { load(); }, [id]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [comments]);
 
+  const notifyTicketMembers = async (title, snippet) => {
+    const participantIds = participants.map((p) => p.user_id);
+    const targets = [ticket.raised_by, ticket.assigned_to, ...participantIds].filter((tid) => tid && tid !== user.id);
+    for (const targetId of [...new Set(targets)]) {
+      await notify({ userId: targetId, title, body: `${profile.full_name}: ${snippet}`, type: 'info', linkType: 'ticket', linkId: id });
+    }
+  };
+
   const send = async () => {
     if (!body.trim()) return;
-    await ticketService.sendComment({ ticketId: id, authorId: user.id, authorName: profile.full_name, body });
+    const sentBody = body;
+    await ticketService.sendComment({ ticketId: id, authorId: user.id, authorName: profile.full_name, body: sentBody });
     setBody('');
+    await notifyTicketMembers(`New reply on ${ticket.ticket_ref}`, sentBody.slice(0, 80));
     load();
   };
 
@@ -44,6 +54,7 @@ export default function TicketDetailPage() {
     try {
       const url = await ticketService.uploadTicketAttachment(id, file);
       await ticketService.sendComment({ ticketId: id, authorId: user.id, authorName: profile.full_name, body: file.name, isFile: true, fileUrl: url });
+      await notifyTicketMembers(`New attachment on ${ticket.ticket_ref}`, file.name);
       load();
     } catch (e) {
       showToast('Upload failed: ' + e.message, 'error');
@@ -119,7 +130,7 @@ export default function TicketDetailPage() {
           </button>
           <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Type message... (Ctrl+Enter to send)"
             onKeyDown={(e) => { if (e.ctrlKey && e.key === 'Enter') send(); }} />
-          <button className="btn btn-gold" onClick={send}><i className="ti ti-send" /></button>
+          <button className="btn btn-gold" onClick={send} aria-label="Send message"><i className="ti ti-send" /></button>
         </div>
       </div>
       <div className="ticket-side">
@@ -144,7 +155,7 @@ export default function TicketDetailPage() {
                 <option value="">Tag someone...</option>
                 {taggableEmployees.map((e) => <option key={e.id} value={e.id}>{e.full_name}</option>)}
               </select>
-              <button className="btn" onClick={addParticipant}><i className="ti ti-plus" /></button>
+              <button className="btn" onClick={addParticipant} aria-label="Add tagged team member"><i className="ti ti-plus" /></button>
             </div>
           )}
           <p style={{ fontSize: 11, color: 'var(--text4)', marginTop: 10 }}>
