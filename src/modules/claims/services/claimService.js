@@ -1,20 +1,20 @@
 import { supabase } from '../../../services/supabase/client';
 import { validateFileSize } from '../../../utils/validators';
-
+ 
 export const CLAIM_STATUSES = ['Filed', 'Under Review', 'Documents Pending', 'Approved', 'Rejected', 'Settled'];
-
+ 
 export async function listClaims() {
   const { data, error } = await supabase.from('claims').select('*').order('created_at', { ascending: false }).limit(1000);
   if (error) throw error;
   return data;
 }
-
+ 
 export async function getClaim(id) {
   const { data, error } = await supabase.from('claims').select('*').eq('id', id).single();
   if (error) throw error;
   return data;
 }
-
+ 
 export async function updateClaim(id, payload) {
   const { data, error } = await supabase
     .from('claims')
@@ -25,13 +25,20 @@ export async function updateClaim(id, payload) {
   if (error) throw error;
   return data;
 }
-
+ 
 export async function createClaim(payload) {
   const { data, error } = await supabase.from('claims').insert(payload).select().single();
   if (error) throw error;
   return data;
 }
-
+ 
+// Admin-only — RLS enforces this server-side too (see migration 018). Cascades to
+// claim_activities and claim_documents automatically; linked tickets are detached, not deleted.
+export async function deleteClaim(id) {
+  const { error } = await supabase.from('claims').delete().eq('id', id);
+  if (error) throw error;
+}
+ 
 export async function updateClaimStatus(id, status, actorId, actorName) {
   const { data: before } = await supabase.from('claims').select('status').eq('id', id).single();
   const patch = { status, updated_at: new Date().toISOString() };
@@ -41,35 +48,35 @@ export async function updateClaimStatus(id, status, actorId, actorName) {
   await logClaimActivity(id, actorId, actorName, 'STATUS_CHANGE', before?.status, status);
   return data;
 }
-
+ 
 export async function logClaimActivity(claimId, actorId, actorName, action, oldValue, newValue, note) {
   await supabase.from('claim_activities').insert({
     claim_id: claimId, actor_id: actorId, actor_name: actorName,
     action, old_value: oldValue ?? null, new_value: newValue ?? null, note: note ?? null,
   });
 }
-
+ 
 export async function listClaimActivities(claimId) {
   const { data, error } = await supabase
     .from('claim_activities').select('*').eq('claim_id', claimId).order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 }
-
+ 
 // Aging: days since filed, for claims not yet settled/rejected.
 export function claimAgeDays(claim) {
   if (['Settled', 'Rejected'].includes(claim.status)) return null;
   const filed = new Date(claim.filed_date);
   return Math.floor((new Date() - filed) / (1000 * 60 * 60 * 24));
 }
-
+ 
 export async function listClaimDocuments(claimId) {
   const { data, error } = await supabase
     .from('claim_documents').select('*').eq('claim_id', claimId).order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 }
-
+ 
 export async function uploadClaimDocument({ claimId, docType, file, uploadedBy, uploadedName }) {
   const sizeErr = validateFileSize(file);
   if (sizeErr) throw new Error(sizeErr);
@@ -84,7 +91,7 @@ export async function uploadClaimDocument({ claimId, docType, file, uploadedBy, 
   if (error) throw error;
   return data;
 }
-
+ 
 // Bulk import from parsed Excel/CSV rows (see xlsx utils on the Claims list page).
 export async function bulkImportClaims(rows, actorId) {
   const payload = rows.map((r) => ({
