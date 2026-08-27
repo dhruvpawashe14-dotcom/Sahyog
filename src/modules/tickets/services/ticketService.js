@@ -1,19 +1,39 @@
 import { supabase } from '../../../services/supabase/client';
 import { validateFileSize } from '../../../utils/validators';
-
+import { TICKET_CLOSED_STATUSES } from '../constants';
+ 
 const SLA_HOURS = { Urgent: 4, High: 24, Medium: 48, Low: 96 };
-
+ 
 export function slaDeadline(ticket) {
   const hours = SLA_HOURS[ticket.priority] ?? 48;
   return new Date(new Date(ticket.created_at).getTime() + hours * 3600 * 1000);
 }
-
+ 
 export function slaStatus(ticket) {
   if (['Resolved', 'Closed'].includes(ticket.status)) return 'met';
   const deadline = slaDeadline(ticket);
   return new Date() > deadline ? 'breached' : 'on-track';
 }
-
+ 
+// Simple "how long has this been open" view — this is what people on the ground
+// actually want to know, not an SLA-hours calculation.
+export function isTicketClosed(ticket) {
+  return TICKET_CLOSED_STATUSES.includes(ticket.status);
+}
+ 
+export function daysOpenLabel(ticket) {
+  const start = new Date(ticket.created_at);
+  const end = isTicketClosed(ticket) && ticket.closed_at ? new Date(ticket.closed_at) : new Date();
+  const diffMs = Math.max(0, end - start);
+  const days = Math.floor(diffMs / 86400000);
+  const closed = isTicketClosed(ticket);
+  if (days < 1) {
+    const hours = Math.max(1, Math.floor(diffMs / 3600000));
+    return closed ? `Took ${hours}h` : `${hours}h old`;
+  }
+  return closed ? `Took ${days}d` : `${days}d open`;
+}
+ 
 export async function listTickets({ userId, userName, isAdmin }) {
   if (isAdmin) {
     const { data, error } = await supabase.from('tickets').select('*').order('created_at', { ascending: false }).limit(1000);
@@ -27,7 +47,7 @@ export async function listTickets({ userId, userName, isAdmin }) {
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
-
+ 
   const participantTicketIds = (participantRows ?? []).map((r) => r.ticket_id);
   let tagged = [];
   if (participantTicketIds.length) {
@@ -35,24 +55,24 @@ export async function listTickets({ userId, userName, isAdmin }) {
     if (error) throw error;
     tagged = data ?? [];
   }
-
+ 
   const merged = [...(own ?? []), ...tagged];
   const deduped = Array.from(new Map(merged.map((t) => [t.id, t])).values());
   return deduped.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
-
+ 
 export async function getTicket(id) {
   const { data, error } = await supabase.from('tickets').select('*').eq('id', id).single();
   if (error) throw error;
   return data;
 }
-
+ 
 export async function createTicket(payload) {
   const { data, error } = await supabase.from('tickets').insert(payload).select().single();
   if (error) throw error;
   return data;
 }
-
+ 
 export async function updateTicketStatus(id, status, actorName) {
   const patch = { status, updated_at: new Date().toISOString() };
   if (status === 'Closed') { patch.closed_by = actorName; patch.closed_at = new Date().toISOString(); }
@@ -60,13 +80,13 @@ export async function updateTicketStatus(id, status, actorName) {
   if (error) throw error;
   return data;
 }
-
+ 
 // Multi-user ticket tagging: participants stored in a join table, not a single assignee.
 export async function addTicketParticipant(ticketId, userId) {
   const { error } = await supabase.from('ticket_participants').insert({ ticket_id: ticketId, user_id: userId });
   if (error) throw error;
 }
-
+ 
 export async function listTicketParticipants(ticketId) {
   const { data, error } = await supabase
     .from('ticket_participants')
@@ -75,7 +95,7 @@ export async function listTicketParticipants(ticketId) {
   if (error) throw error;
   return data;
 }
-
+ 
 export async function listComments(ticketId) {
   const { data, error } = await supabase
     .from('ticket_comments')
@@ -85,16 +105,16 @@ export async function listComments(ticketId) {
   if (error) throw error;
   return data;
 }
-
-export async function sendComment({ ticketId, authorId, authorName, body, isFile = false, fileUrl = null }) {
+ 
+export async function sendComment({ ticketId, authorId, authorName, body, isFile = false, fileUrl = null, isVoiceNote = false }) {
   const { error } = await supabase.from('ticket_comments').insert({
     ticket_id: ticketId, author_id: authorId, author_name: authorName,
-    body, is_file: isFile, file_url: fileUrl, created_at: new Date().toISOString(),
+    body, is_file: isFile, file_url: fileUrl, is_voice_note: isVoiceNote, created_at: new Date().toISOString(),
   });
   if (error) throw error;
   await supabase.from('tickets').update({ status: 'In Progress', updated_at: new Date().toISOString() }).eq('id', ticketId);
 }
-
+ 
 export async function uploadTicketAttachment(ticketId, file) {
   const sizeErr = validateFileSize(file);
   if (sizeErr) throw new Error(sizeErr);
