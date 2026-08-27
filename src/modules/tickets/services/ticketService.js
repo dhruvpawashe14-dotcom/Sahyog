@@ -81,6 +81,13 @@ export async function updateTicketStatus(id, status, actorName) {
   return data;
 }
  
+// Admin-only — RLS enforces this server-side too (see migration 018). Cascades to
+// ticket_comments and ticket_participants automatically.
+export async function deleteTicket(id) {
+  const { error } = await supabase.from('tickets').delete().eq('id', id);
+  if (error) throw error;
+}
+ 
 // Multi-user ticket tagging: participants stored in a join table, not a single assignee.
 export async function addTicketParticipant(ticketId, userId) {
   const { error } = await supabase.from('ticket_participants').insert({ ticket_id: ticketId, user_id: userId });
