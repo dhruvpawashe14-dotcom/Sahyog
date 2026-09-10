@@ -15,16 +15,17 @@ export async function uploadDocument({ clientId, docType, file, uploadedBy, uplo
   const sizeErr = validateFileSize(file);
   if (sizeErr) throw new Error(sizeErr);
   const path = `kyc/${clientId}/${Date.now()}_${file.name}`;
+  // kyc-documents is a PRIVATE bucket — we store only the path, never a
+  // permanent public URL. Access is via a short-lived signed URL, minted
+  // on demand (see getSignedFileUrl in services/supabase/secureStorage.js).
   const { error: upErr } = await supabase.storage.from('kyc-documents').upload(path, file);
   if (upErr) throw upErr;
-  const { data: urlData } = supabase.storage.from('kyc-documents').getPublicUrl(path);
 
   const { data, error } = await supabase.from('documents').insert({
     client_id: clientId,
     doc_type: docType,
     file_name: file.name,
     file_path: path,
-    file_url: urlData.publicUrl,
     file_size: file.size,
     mime_type: file.type,
     status: 'Uploaded',
@@ -58,14 +59,12 @@ export async function uploadLeadDocument({ leadId, label, file, uploadedBy, uplo
   const path = `leads/${leadId}/${Date.now()}_${file.name}`;
   const { error: upErr } = await supabase.storage.from('kyc-documents').upload(path, file);
   if (upErr) throw upErr;
-  const { data: urlData } = supabase.storage.from('kyc-documents').getPublicUrl(path);
 
   const { data, error } = await supabase.from('documents').insert({
     lead_id: leadId,
     doc_type: label,
     file_name: file.name,
     file_path: path,
-    file_url: urlData.publicUrl,
     file_size: file.size,
     mime_type: file.type,
     status: 'Uploaded',
