@@ -81,11 +81,12 @@ export async function uploadClaimDocument({ claimId, docType, file, uploadedBy, 
   const sizeErr = validateFileSize(file);
   if (sizeErr) throw new Error(sizeErr);
   const path = `claims/${claimId}/${Date.now()}_${file.name}`;
+  // claim-documents is a PRIVATE bucket — store only the path, access via a
+  // short-lived signed URL minted on demand, never a permanent public link.
   const { error: upErr } = await supabase.storage.from('claim-documents').upload(path, file);
   if (upErr) throw upErr;
-  const { data: urlData } = supabase.storage.from('claim-documents').getPublicUrl(path);
   const { data, error } = await supabase.from('claim_documents').insert({
-    claim_id: claimId, doc_type: docType, file_name: file.name, file_url: urlData.publicUrl,
+    claim_id: claimId, doc_type: docType, file_name: file.name, file_path: path,
     uploaded_by: uploadedBy, uploaded_name: uploadedName,
   }).select().single();
   if (error) throw error;
