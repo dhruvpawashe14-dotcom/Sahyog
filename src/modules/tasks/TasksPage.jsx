@@ -45,12 +45,17 @@ export default function TasksPage() {
   const pageRows = scoped.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const changeTaskStatus = async (task, status) => {
-    await taskService.updateTaskStatus(task.id, status);
-    const notifyTargets = [task.assigned_to, task.created_by].filter((tid) => tid && tid !== user.id);
-    for (const targetId of [...new Set(notifyTargets)]) {
-      await notify({ userId: targetId, title: `Task ${status.toLowerCase()}`, body: task.title, type: 'info', linkType: 'task', linkId: null });
+    try {
+      await taskService.updateTaskStatus(task.id, status);
+      const notifyTargets = [task.assigned_to, task.created_by].filter((tid) => tid && tid !== user.id);
+      for (const targetId of [...new Set(notifyTargets)]) {
+        await notify({ userId: targetId, title: `Task ${status.toLowerCase()}`, body: task.title, type: 'info', linkType: 'task', linkId: null });
+      }
+    } catch (e) {
+      showToast('Status change failed: ' + e.message, 'error');
+    } finally {
+      load();
     }
-    load();
   };
 
   const columns = [
