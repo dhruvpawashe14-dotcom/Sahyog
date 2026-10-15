@@ -1,4 +1,6 @@
 import { supabase } from '../../../services/supabase/client';
+import { splitFullName } from '../../../utils/name';
+import { getClientByLead } from '../../clients/services/clientService';
 
 export const STAGES = [
   'New Lead', 'Contacted', 'Interested', 'Meeting Scheduled', 'Follow-up Pending',
@@ -74,8 +76,10 @@ export async function listActivities(leadId) {
 
 // Lead → Client conversion (Phase 1 built createClient; this wires the button + activity log)
 export async function convertToClient(lead, actorId, actorName) {
+  const existing = await getClientByLead(lead.id);
+  if (existing) return { client: existing, alreadyConverted: true };
   const { data: client, error } = await supabase.from('clients').insert({
-    full_name: lead.full_name, mobile: lead.mobile, email: lead.email,
+    full_name: lead.full_name, ...splitFullName(lead.full_name), mobile: lead.mobile, email: lead.email,
     address: lead.address, city: lead.city, state: lead.state,
     pan_number: lead.pan_number, aadhaar_number: lead.aadhaar_number,
     assigned_to: lead.assigned_to, assigned_name: lead.assigned_name,
@@ -84,5 +88,11 @@ export async function convertToClient(lead, actorId, actorName) {
   if (error) throw error;
   await updateLeadStage(lead.id, 'Policy Issued', actorId, actorName);
   await logActivity(lead.id, actorId, actorName, 'CONVERTED_TO_CLIENT', null, `client #${client.id}`);
-  return client;
+  return { client, alreadyConverted: false };
+}
+
+// Marks a follow-up as handled so it stops showing on the dashboard.
+export async function clearFollowUp(id) {
+  const { error } = await supabase.from('leads').update({ follow_up_date: null, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
 }
