@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchDashboardStats, fetchAttentionItems, fetchRecentActivity } from './services/dashboardService';
+import { clearFollowUp } from '../leads/services/leadService';
+import { useToast } from '../../components/common/Toast';
 import QuickContact from '../../components/common/QuickContact';
 import { capitalizeWords } from '../../utils/text';
 
@@ -20,12 +22,26 @@ const QUICK_ACTIONS = [
   { label: 'Schedule Meeting', icon: 'ti-calendar-plus', path: '/calendar' },
 ];
 
+const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local time
+
 export default function DashboardPage() {
   const { user, profile, isAdmin } = useAuth();
   const [stats, setStats] = useState(null);
   const [attention, setAttention] = useState(null);
   const [activity, setActivity] = useState([]);
   const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  // A follow-up stays on the dashboard until it's marked done (or rescheduled
+  // from the lead). Done clears the date so it never shows again.
+  const markFollowUpDone = async (leadId) => {
+    try {
+      await clearFollowUp(leadId);
+      setAttention((a) => ({ ...a, followups: a.followups.filter((f) => f.id !== leadId) }));
+    } catch (e) {
+      showToast('Could not update follow-up: ' + e.message, 'error');
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -67,7 +83,12 @@ export default function DashboardPage() {
             attention.followups.slice(0, 6).map((f) => (
               <div key={f.id} className="dup-row" style={{ cursor: 'pointer' }} onClick={() => navigate(`/leads/${f.id}`)}>
                 {f.full_name} <QuickContact mobile={f.mobile} />
-                <div className="dim" style={{ fontSize: 11 }}>{f.follow_up_date}</div>
+                <div className="dim" style={{ fontSize: 11, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={f.follow_up_date < todayStr ? { color: 'var(--red, #c0392b)' } : undefined}>
+                    {f.follow_up_date < todayStr ? 'Overdue · ' : 'Today · '}{f.follow_up_date}
+                  </span>
+                  <button className="link-btn" onClick={(e) => { e.stopPropagation(); markFollowUpDone(f.id); }}>Mark done</button>
+                </div>
               </div>
             ))}
         </div>
