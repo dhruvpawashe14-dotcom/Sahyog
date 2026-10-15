@@ -12,7 +12,19 @@ export async function getClient(id) {
   return data;
 }
 
+// A lead converts to at most one client — returns it if it already exists.
+export async function getClientByLead(leadId) {
+  const { data, error } = await supabase.from('clients').select('id, full_name').eq('source_lead_id', leadId).limit(1);
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
 export async function createClient(payload) {
+  // PAN is unique per person — refuse a second client with the same PAN.
+  if (payload.pan_number) {
+    const { data: same } = await supabase.from('clients').select('id, full_name').eq('pan_number', payload.pan_number.toUpperCase()).limit(1);
+    if (same?.length) throw new Error(`A client with this PAN already exists: ${same[0].full_name}`);
+  }
   const { data, error } = await supabase.from('clients').insert(payload).select().single();
   if (error) throw error;
   return data;
