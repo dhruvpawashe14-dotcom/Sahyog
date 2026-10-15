@@ -28,7 +28,9 @@ export async function fetchAttentionItems({ userId }) {
   const in7days = toLocalDateStr(new Date(Date.now() + 7 * 24 * 3600 * 1000));
 
   const followupsQ = supabase.from('leads').select('id, full_name, mobile, follow_up_date, assigned_name')
-    .lte('follow_up_date', today).not('follow_up_date', 'is', null).eq('assigned_to', userId).order('follow_up_date');
+    .lte('follow_up_date', today).not('follow_up_date', 'is', null).eq('assigned_to', userId)
+    .not('stage', 'in', '("Closed Won","Closed Lost","Policy Issued")') // finished leads have nothing left to follow up
+    .order('follow_up_date');
   const renewalsQ = supabase.from('policies').select('id, policy_number, product, renewal_date, client_id, clients(full_name, mobile)')
     .lte('renewal_date', in30days).not('renewal_date', 'is', null).eq('status', 'Active').order('renewal_date');
   const ticketsQ = supabase.from('tickets').select('id, ticket_ref, subject, priority, created_at, assigned_name')
